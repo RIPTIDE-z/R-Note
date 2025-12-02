@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/qss_qrc">
+        <file>qss/light_fluent.qss</file>
+    </qresource>
+    <qresource prefix="/icon_qrc">
+        <file>icon/bf6.ico</file>
+    </qresource>
+</RCC>

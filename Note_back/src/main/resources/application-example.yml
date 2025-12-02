@@ -1,0 +1,94 @@
+server:
+  port: [ ]
+  servlet:
+    context-path: /api
+  address: 0.0.0.0
+
+spring:
+  application:
+    name: R-Note
+
+  datasource:
+
+    druid:
+
+      # DataSource1
+      student-db:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://localhost:3306/student_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+        username: [ ]
+        password:
+        initial-size: 3
+        max-active: 10
+        min-idle: 3
+        max-wait: 60000
+        filters: stat,wall
+
+      # DataSource2
+      log-db:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://localhost:3306/log_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+        username: []
+        password: []
+        initial-size: 3
+        max-active: 10
+        min-idle: 3
+        max-wait: 60000
+        filters: stat,wall     # 同样开启监控过滤
+
+      # Druid Monitor
+      filters: stat,wall,slf4j
+      stat-view-servlet:
+        enabled: true
+        url-pattern: /druid/*
+        login-username: admin
+        login-password: admin
+      web-stat-filter:
+        enabled: true
+        url-pattern: /*
+
+  # Jackson Json
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+  # Atomikos
+  jta:
+    enabled: true
+    atomikos:
+      properties:
+        transaction-manager-unique-name: txManager
+        enable-logging: true
+        log-base-dir: logs/atom-logs
+      datasource:
+        student:
+          min-pool-size: 5
+          max-pool-size: 20
+          borrow-connection-timeout: 60
+          max-lifetime: 600000
+
+        log:
+          min-pool-size: 5
+          max-pool-size: 20
+          borrow-connection-timeout: 60
+          max-lifetime: 600000
+
+# MyBatis
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# Log
+logging:
+  file:
+    name: logs/student-app.log
+  level:
+    com.atomikos: debug
+    com.riptidez.notebackend: debug
+    com.alibaba.druid: debug
+    com.riptidez.notebackend.mapper: debug
+    org.springframework.transaction: debug
+  pattern:
+    console: "%-5level %-36logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %-50logger{50} - %msg%n"

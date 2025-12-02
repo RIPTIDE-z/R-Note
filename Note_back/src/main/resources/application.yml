@@ -1,0 +1,4 @@
+spring:
+  profiles:
+    # 指定使用哪个yml配置
+    active: prod

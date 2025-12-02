@@ -1,0 +1,9 @@
+/.history/
+
+Note_back/.idea/
+Note_back/.mvn/
+Note_back/logs/
+Note_back/target/
+
+Note_front/.vs/
+Note_front/out/
