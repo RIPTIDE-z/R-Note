@@ -16,5 +16,3 @@
 
 - Release0.1 为框架合作的验证程序，实际运行效果类似学生管理系统
     - 需要自行配置Mysql，两个数据库的初始化sql脚本位于`Note_back\src\main\resources\sql`
-
-![](image\front_release0.1.png)
