@@ -12,32 +12,32 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import javax.sql.DataSource;
 
 /**
- * 次数据源：log_db
+ * 次数据源：note_db
  * 配置 MyBatis（SqlSessionFactory / SqlSessionTemplate / MapperScan）
  */
 @Configuration
 @MapperScan(
-        basePackages = "com.riptidez.notebackend.mapper.log",
-        sqlSessionTemplateRef = "logSqlSessionTemplate"
+        basePackages = "com.riptidez.notebackend.note.mapper",
+        sqlSessionTemplateRef = "noteSqlSessionTemplate"
 )
 public class SecondaryDataSourceConfig {
 
-    @Bean(name = "logSqlSessionFactory")
-    public SqlSessionFactory logSqlSessionFactory(
-            @Qualifier("logDataSource") DataSource dataSource) throws Exception {
+    @Bean(name = "noteSqlSessionFactory")
+    public SqlSessionFactory noteSqlSessionFactory(
+            @Qualifier("noteDataSource") DataSource dataSource) throws Exception {
 
         SqlSessionFactoryBean bean = new SqlSessionFactoryBean();
         bean.setDataSource(dataSource);
         bean.setMapperLocations(
                 new PathMatchingResourcePatternResolver()
-                        .getResources("classpath*:mapper/log/*.xml"));
-        bean.setTypeAliasesPackage("com.riptidez.notebackend.entity.log");
+                        .getResources("classpath*:mapper/note/*.xml"));
+        bean.setTypeAliasesPackage("com.riptidez.notebackend.note.entity");
         return bean.getObject();
     }
 
-    @Bean(name = "logSqlSessionTemplate")
-    public SqlSessionTemplate logSqlSessionTemplate(
-            @Qualifier("logSqlSessionFactory") SqlSessionFactory sqlSessionFactory) {
+    @Bean(name = "noteSqlSessionTemplate")
+    public SqlSessionTemplate noteSqlSessionTemplate(
+            @Qualifier("noteSqlSessionFactory") SqlSessionFactory sqlSessionFactory) {
 
         return new SqlSessionTemplate(sqlSessionFactory);
     }
