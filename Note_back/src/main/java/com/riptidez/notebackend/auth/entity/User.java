@@ -1,10 +1,14 @@
 package com.riptidez.notebackend.auth.entity;
 
+/**
+ * 用户信息实体类
+ */
+
 public class User {
-    private Long id;               // auth_db.User.id
-    private String username;       // 唯一
-    private String passwordHash;   // 密码hash
-    private String noteStructure;  // 存 JSON 字符串
+    private Long id;
+    private String username;
+    private String passwordHash;
+    private String noteStructure;
 
     public Long getId() {
         return id;

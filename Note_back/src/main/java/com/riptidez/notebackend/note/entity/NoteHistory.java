@@ -2,13 +2,17 @@ package com.riptidez.notebackend.note.entity;
 
 import java.time.LocalDateTime;
 
+/**
+ * 笔记历史实体类
+ */
+
 public class NoteHistory {
-    private Long id;             // NoteHistory.id
-    private Long noteId;         // NoteHistory.note_id
-    private Integer version;     // 1,2,3...
-    private LocalDateTime createdTime;  // created_time
-    private String content;      // content
-    private String changeSummary;// change_summary
+    private Long id;
+    private Long noteId;
+    private Integer version;
+    private LocalDateTime createdTime;
+    private String content;
+    private String changeSummary;
 
     public Long getId() {
         return id;

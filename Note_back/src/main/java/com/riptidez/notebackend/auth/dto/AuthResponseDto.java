@@ -1,9 +1,16 @@
 package com.riptidez.notebackend.auth.dto;
 
+/**
+ * 用于注册/登录请求的响应体
+ */
+
 public class AuthResponseDto {
-    private Integer code;           // "0" 成功, "1" 失败
-    private String message;        // 提示信息
-    private String structure; // 成功时有，失败时可以为 null
+    /** 标识数字，0代表成功 1代表失败 */
+    private Integer code;
+    /** 返回的信息 */
+    private String message;
+    /** 笔记结构，直接以string格式返回，json解析交给前端 */
+    private String structure;
 
     public Integer getCode() {
         return code;

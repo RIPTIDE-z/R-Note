@@ -17,7 +17,7 @@ public class AuthController {
     private AuthService authService;
 
     @Autowired
-    private NoteService noteService; // 登录时需要同步笔记列表/当前内容的话可用
+    private NoteService noteService;
 
     @PostMapping("/register")
     public void register(@RequestBody AuthRequestDto req) {
@@ -26,16 +26,22 @@ public class AuthController {
 
     @PostMapping("/login")
     public AuthResponseDto login(@RequestBody AuthRequestDto req) {
-        // 如果用户名/密码不合法，可以在这里做最基本的校验（可选）
         User user = authService.login(req.getUsername(), req.getPassword());
 
         AuthResponseDto resp = new AuthResponseDto();
-        resp.setCode(0);                       // 约定 0 表示成功
-        resp.setMessage("登录成功");
-        resp.setStructure(user.getNoteStructure()); // 直接返回 note_structure 字符串
+        if (user == null) {
+            resp.setCode(1);
+            resp.setMessage("用户名或密码错误");
+            resp.setStructure(null);
+            return resp; // HTTP 200 + code=1
+        }
 
-        return resp;
+        resp.setCode(0);
+        resp.setMessage("登录成功");
+        resp.setStructure(user.getNoteStructure());
+        return resp; // HTTP 200 + code=0
     }
+
 
     @PostMapping("/logout")
     public void logout() {

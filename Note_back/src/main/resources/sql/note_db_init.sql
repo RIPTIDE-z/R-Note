@@ -1,4 +1,4 @@
--- 创建数据库
+-- 创建note数据库
 CREATE
 DATABASE IF NOT EXISTS note_db
   DEFAULT CHARACTER SET utf8mb4

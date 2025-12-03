@@ -12,8 +12,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import javax.sql.DataSource;
 
 /**
- * 次数据源：note_db
- * 配置 MyBatis（SqlSessionFactory / SqlSessionTemplate / MapperScan）
+ * 次数据源：note_db 的 MyBatis 配置
  */
 @Configuration
 @MapperScan(

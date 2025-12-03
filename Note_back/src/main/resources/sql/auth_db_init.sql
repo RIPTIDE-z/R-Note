@@ -1,4 +1,4 @@
--- 创建数据库
+-- 创建auth数据库
 CREATE
 DATABASE IF NOT EXISTS auth_db
   DEFAULT CHARACTER SET utf8mb4

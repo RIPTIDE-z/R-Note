@@ -13,8 +13,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import javax.sql.DataSource;
 
 /**
- * 主数据源：auth_db
- * 配置 MyBatis（SqlSessionFactory / SqlSessionTemplate / MapperScan）
+ * 主数据源 auth_db 的Mybatis配置
  */
 @Configuration
 @MapperScan(

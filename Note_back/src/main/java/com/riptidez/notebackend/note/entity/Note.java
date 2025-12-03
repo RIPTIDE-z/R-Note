@@ -1,5 +1,9 @@
 package com.riptidez.notebackend.note.entity;
 
+/**
+ * 笔记元数据实体类
+ */
+
 public class Note {
     private Long id;               // Note.id
     private Long userId;           // Note.user_id（指向 User）

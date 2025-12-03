@@ -1,5 +1,5 @@
 server:
-  port: [ ]
+  port: 8080
   servlet:
     context-path: /api
   address: 0.0.0.0
@@ -11,32 +11,29 @@ spring:
   datasource:
 
     druid:
-
-      # DataSource1
-      student-db:
+      auth-db:
         driver-class-name: com.mysql.cj.jdbc.Driver
-        url: jdbc:mysql://localhost:3306/student_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+        url: jdbc:mysql://localhost:3306/auth_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
         username: [ ]
-        password:
-        initial-size: 3
-        max-active: 10
-        min-idle: 3
-        max-wait: 60000
-        filters: stat,wall
+        password: [ ]
+        initial-size: 3        # 连接池初始大小
+        max-active: 10         # 最大连接数
+        min-idle: 3            # 最小空闲连接
+        max-wait: 60000        # 获取连接最大等待时间 (毫秒)
+        filters: stat,wall     # Druid 监控过滤器，开启SQL监控、防火墙等
 
-      # DataSource2
-      log-db:
+      note-db:
         driver-class-name: com.mysql.cj.jdbc.Driver
-        url: jdbc:mysql://localhost:3306/log_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-        username: []
-        password: []
+        url: jdbc:mysql://localhost:3306/note_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+        username: [ ]
+        password: [ ]
         initial-size: 3
         max-active: 10
         min-idle: 3
         max-wait: 60000
         filters: stat,wall     # 同样开启监控过滤
 
-      # Druid Monitor
+      # 监控相关
       filters: stat,wall,slf4j
       stat-view-servlet:
         enabled: true
@@ -47,42 +44,43 @@ spring:
         enabled: true
         url-pattern: /*
 
-  # Jackson Json
+  # Jackson JSON 配置
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
 
-  # Atomikos
   jta:
     enabled: true
+
+    # atomikos配置
     atomikos:
       properties:
         transaction-manager-unique-name: txManager
         enable-logging: true
         log-base-dir: logs/atom-logs
       datasource:
-        student:
+        auth:
           min-pool-size: 5
           max-pool-size: 20
           borrow-connection-timeout: 60
           max-lifetime: 600000
 
-        log:
+        note:
           min-pool-size: 5
           max-pool-size: 20
           borrow-connection-timeout: 60
           max-lifetime: 600000
 
-# MyBatis
+# MyBatis 配置
 mybatis:
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
-# Log
+# 日志配置
 logging:
   file:
-    name: logs/student-app.log
+    name: logs/note-backend.log   # 目标日志文件路径（相对项目根目录）
   level:
     com.atomikos: debug
     com.riptidez.notebackend: debug

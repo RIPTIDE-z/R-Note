@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Primary;
 
 
 /**
- * 只负责创建两个 XA DataSource（DruidXA + Atomikos）
+ * 两个 XA DataSource的配置（DruidXA + Atomikos）
  */
 @Configuration
 public class DataSourceConfig {
@@ -31,7 +31,7 @@ public class DataSourceConfig {
 
         AtomikosDataSourceBean xaDataSource = new AtomikosDataSourceBean();
         xaDataSource.setXaDataSource(druidXADataSource);
-        xaDataSource.setUniqueResourceName("authDbXA"); // 必须唯一
+        xaDataSource.setUniqueResourceName("authDbXA");
 
         return xaDataSource;
     }
