@@ -1,0 +1,69 @@
+<configuration>
+
+    <!-- 定义三个 appender -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%-5level %-50logger{50} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="APP_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>logs/note-backend.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %-50logger{50} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="ATOM_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>logs/atom.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %-50logger{50} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="AUTH_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>logs/auth.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %-50logger{50} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="NOTE_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>logs/note.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %-50logger{50} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- logger: auth 包 —— 打 auth.log + console -->
+    <logger name="com.riptidez.notebackend.auth.service"
+            level="DEBUG"
+            additivity="false">
+        <appender-ref ref="AUTH_FILE"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <!-- logger: note 包 —— 打 note.log + console -->
+    <logger name="com.riptidez.notebackend.note"
+            level="DEBUG"
+            additivity="false">
+        <appender-ref ref="NOTE_FILE"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <logger name="com.atomikos"
+            level="DEBUG"
+            additivity="false">
+        <appender-ref ref="ATOM_FILE"/>
+    </logger>
+
+    <!-- root logger —— 仅文件输出(主日志文件) -->
+    <root level="INFO">
+        <appender-ref ref="APP_FILE"/>
+    </root>
+
+</configuration>
