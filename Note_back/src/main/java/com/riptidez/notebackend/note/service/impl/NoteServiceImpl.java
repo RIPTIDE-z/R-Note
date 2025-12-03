@@ -31,7 +31,6 @@ public class NoteServiceImpl implements NoteService {
         note.setUserId(userId);
         noteMapper.insert(note);
 
-
         // 2. 创建首个历史版本 version=1，content 为空字符串
         NoteHistory h = new NoteHistory();
         h.setNoteId(note.getId());
