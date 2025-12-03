@@ -1,6 +1,7 @@
 package com.riptidez.notebackend.auth.helper;
 
 import com.riptidez.notebackend.auth.service.SessionService;
+import com.riptidez.notebackend.exception.ExceptionWithMessage;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -18,8 +19,7 @@ public class AuthTokenHelper {
     public Long requireUserId(String token) {
         Long userId = sessionService.getUserIdByToken(token);
         if (userId == null) {
-            // 如果你有自定义 BusinessException，就替换成它
-            throw new RuntimeException("未登录或会话已失效");
+            throw new ExceptionWithMessage("未登录或会话已失效");
         }
         return userId;
     }

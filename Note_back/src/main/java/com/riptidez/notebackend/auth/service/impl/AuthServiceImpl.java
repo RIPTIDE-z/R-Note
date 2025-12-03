@@ -3,6 +3,7 @@ package com.riptidez.notebackend.auth.service.impl;
 import com.riptidez.notebackend.auth.entity.User;
 import com.riptidez.notebackend.auth.mapper.UserMapper;
 import com.riptidez.notebackend.auth.service.AuthService;
+import com.riptidez.notebackend.exception.ExceptionWithMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,23 +20,25 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public void register(String username, String passwordHash) {
-        if (userMapper.findByUsername(username) != null) {
-            throw new RuntimeException("用户名已存在");
+    public User register(String username, String passwordHash) {
+        if (userMapper.findHashByUsername(username) != null) {
+            throw new ExceptionWithMessage("用户名已存在");
         }
+
         User user = new User();
         user.setUsername(username);
         user.setPasswordHash(passwordHash);
-        // 初始结构给个最小 JSON 串，或者干脆 null
-        user.setNoteStructure("{\"version\":1,\"userId\":0,\"root\":{\"id\":\"root\",\"name\":\"root\",\"type\":\"folder\",\"children\":[]}}");
+        user.setNoteStructure("{ }");
         userMapper.insert(user);
+
+        return user;
     }
 
     @Override
     public User login(String username, String passwordHash) {
-        User user = userMapper.findByUsername(username);
+        User user = userMapper.findHashByUsername(username);
         if (user == null || !passwordHash.equals(user.getPasswordHash())) {
-            throw new RuntimeException("用户名或密码错误");
+            throw new ExceptionWithMessage("用户名或密码错误");
         }
         return user;
     }

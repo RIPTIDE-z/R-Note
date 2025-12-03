@@ -37,6 +37,13 @@ public class AuthResponseDto {
         this.structure = structure;
     }
 
+    public void setResp(Integer code, String message, String token, String structure) {
+        this.code = code;
+        this.message = message;
+        this.token = token;
+        this.structure = structure;
+    }
+
     @Override
     public String toString() {
         return "AuthResponseDto{" +

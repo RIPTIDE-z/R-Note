@@ -6,7 +6,7 @@ public class AuthRequestDto {
     /** 用户名 */
     private String username;
     /** 用户密码，前端传入已加密的hash值 */
-    private String password;
+    private String passwordHash;
 
     public String getUsername() {
         return username;
@@ -16,19 +16,19 @@ public class AuthRequestDto {
         this.username = username;
     }
 
-    public String getPassword() {
-        return password;
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
     @Override
     public String toString() {
         return "LoginRequest{" +
                 "username='" + username + '\'' +
-                ", password='" + password + '\'' +
+                ", password='" + passwordHash + '\'' +
                 '}';
     }
 }
