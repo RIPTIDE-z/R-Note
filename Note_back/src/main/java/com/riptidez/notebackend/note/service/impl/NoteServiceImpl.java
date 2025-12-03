@@ -5,6 +5,8 @@ import com.riptidez.notebackend.note.entity.NoteHistory;
 import com.riptidez.notebackend.note.mapper.NoteHistoryMapper;
 import com.riptidez.notebackend.note.mapper.NoteMapper;
 import com.riptidez.notebackend.note.service.NoteService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +16,7 @@ import java.util.List;
 
 @Service
 public class NoteServiceImpl implements NoteService {
+    private final static Logger log = LoggerFactory.getLogger(NoteServiceImpl.class);
     @Autowired
     private NoteMapper noteMapper;
 
@@ -39,6 +42,7 @@ public class NoteServiceImpl implements NoteService {
 
         // 3. 更新 Note.current_history_id
         noteMapper.updateCurrentHistoryId(note.getId(), h.getId());
+        log.info("成功创建新笔记");
 
         return note;
     }

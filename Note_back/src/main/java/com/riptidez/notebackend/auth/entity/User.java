@@ -1,5 +1,7 @@
 package com.riptidez.notebackend.auth.entity;
 
+import com.fasterxml.jackson.annotation.JsonRawValue;
+
 /**
  * 用户信息实体类
  */
@@ -8,6 +10,7 @@ public class User {
     private Long id;
     private String username;
     private String passwordHash;
+    @JsonRawValue
     private String noteStructure;
 
     public Long getId() {

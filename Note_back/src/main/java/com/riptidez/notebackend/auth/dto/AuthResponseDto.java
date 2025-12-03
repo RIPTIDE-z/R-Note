@@ -1,5 +1,7 @@
 package com.riptidez.notebackend.auth.dto;
 
+import com.fasterxml.jackson.annotation.JsonRawValue;
+
 /**
  * 用于注册/登录请求的响应体
  */
@@ -12,6 +14,7 @@ public class AuthResponseDto {
     /** Token */
     private String token;
     /** 笔记结构，直接以string格式返回，json解析交给前端 */
+    @JsonRawValue
     private String structure;
 
 

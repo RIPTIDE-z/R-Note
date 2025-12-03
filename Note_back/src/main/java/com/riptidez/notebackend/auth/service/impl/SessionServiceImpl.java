@@ -1,6 +1,8 @@
 package com.riptidez.notebackend.auth.service.impl;
 
 import com.riptidez.notebackend.auth.service.SessionService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -18,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Service
 public class SessionServiceImpl implements SessionService {
+    private static final Logger log = LoggerFactory.getLogger(SessionServiceImpl.class);
 
     /**
      * token -> userId
@@ -35,6 +38,7 @@ public class SessionServiceImpl implements SessionService {
 
         // 保存映射关系
         sessions.put(token, userId);
+        log.info("Session成功创建");
 
         return token;
     }
@@ -53,5 +57,6 @@ public class SessionServiceImpl implements SessionService {
             return;
         }
         sessions.remove(token);
+        log.info("用户成功登出");
     }
 }
