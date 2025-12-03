@@ -44,35 +44,11 @@ public class NoteServiceImpl implements NoteService {
     }
 
     @Override
-    public List<Note> listNotes(Long userId) {
-        return noteMapper.findByUserId(userId);
-    }
+    public NoteHistory getNote(Long noteId, Long userId) {
 
+        NoteHistory note =  new NoteHistory();
+        note = noteHistoryMapper.findByNoteIdAndVersion(noteId, 1);
 
-    @Override
-    @Transactional
-    public NoteHistory updateNote(Long noteId, Long userId, String content, String changeSummary) {
-        Note note = noteMapper.findById(noteId);
-        if (note == null || !note.getUserId().equals(userId)) {
-            throw new RuntimeException("笔记不存在或无权限");
-        }
-
-        // 查当前最大 version
-        NoteHistory latest = noteHistoryMapper.findLatestByNoteId(noteId);
-        int newVersion = (latest == null ? 1 : latest.getVersion() + 1);
-
-        // 新增历史版本
-        NoteHistory history = new NoteHistory();
-        history.setNoteId(noteId);
-        history.setVersion(newVersion);
-        history.setCreatedTime(LocalDateTime.now());
-        history.setContent(content);
-        history.setChangeSummary(changeSummary);
-        noteHistoryMapper.insert(history);
-
-        // 更新 Note.current_history_id
-        noteMapper.updateCurrentHistoryId(noteId, history.getId());
-
-        return history;
+        return note;
     }
 }

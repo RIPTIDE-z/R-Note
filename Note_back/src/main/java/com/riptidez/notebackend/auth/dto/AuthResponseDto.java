@@ -9,29 +9,30 @@ public class AuthResponseDto {
     private Integer code;
     /** 返回的信息 */
     private String message;
+    /** Token */
+    private String token;
     /** 笔记结构，直接以string格式返回，json解析交给前端 */
     private String structure;
+
 
     public Integer getCode() {
         return code;
     }
-
     public void setCode(Integer code) {
         this.code = code;
     }
 
-    public String getMessage() {
-        return message;
-    }
-
+    public String getMessage() { return message;}
     public void setMessage(String message) {
         this.message = message;
     }
 
+    public String getToken() { return token;}
+    public void setToken(String token) { this.token = token;}
+
     public String getStructure() {
         return structure;
     }
-
     public void setStructure(String structure) {
         this.structure = structure;
     }

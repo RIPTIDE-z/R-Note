@@ -42,7 +42,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public User getCurrentUser() {
-        // 从 session/token 拿 userId 再查，这里略
+        //TODO 从 session/token 拿 currentUser
         throw new UnsupportedOperationException("TODO");
     }
 
@@ -61,5 +61,10 @@ public class AuthServiceImpl implements AuthService {
         if (n == 0) {
             throw new RuntimeException("更新笔记结构失败");
         }
+    }
+
+    @Override
+    public User findById(Long id) {
+        return userMapper.findById(id);
     }
 }

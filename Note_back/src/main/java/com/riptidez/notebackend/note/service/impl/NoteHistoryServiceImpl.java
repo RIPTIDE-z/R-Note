@@ -45,7 +45,7 @@ public class NoteHistoryServiceImpl implements NoteHistoryService {
 
     @Override
     @Transactional
-    public NoteHistory rollback(Long noteId, Long version, Long userId, String changeSummary) {
+    public NoteHistory update(Long noteId, Long version, Long userId, String changeSummary) {
         Note note = noteMapper.findById(noteId);
         if (note == null || !note.getUserId().equals(userId)) {
             throw new RuntimeException("笔记不存在或无权限");

@@ -9,5 +9,5 @@ public interface NoteHistoryService {
 
     NoteHistory getHistory(Long noteId, Long version, Long userId);
 
-    NoteHistory rollback(Long noteId, Long version, Long userId, String changeSummary);
+    NoteHistory update(Long noteId, Long version, Long userId, String changeSummary);
 }

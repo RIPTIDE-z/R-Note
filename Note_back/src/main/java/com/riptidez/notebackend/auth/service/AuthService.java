@@ -12,4 +12,6 @@ public interface AuthService {
     String getNoteStructure(Long userId);
 
     void updateNoteStructure(Long userId, String noteStructureJson);
+
+    User findById(Long id);
 }
