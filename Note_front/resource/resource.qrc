@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/icon_qrc">
+        <file>icon/bf6.ico</file>
+    </qresource>
+</RCC>
