@@ -13,34 +13,33 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import javax.sql.DataSource;
 
 /**
- * 主数据源：student_db
- * 配置 MyBatis（SqlSessionFactory / SqlSessionTemplate / MapperScan）
+ * 主数据源 auth_db 的Mybatis配置
  */
 @Configuration
 @MapperScan(
-        basePackages = "com.riptidez.notebackend.mapper.student",
-        sqlSessionTemplateRef = "studentSqlSessionTemplate"
+        basePackages = "com.riptidez.notebackend.auth.mapper",
+        sqlSessionTemplateRef = "authSqlSessionTemplate"
 )
 public class PrimaryDataSourceConfig {
 
     @Primary
-    @Bean(name = "studentSqlSessionFactory")
-    public SqlSessionFactory studentSqlSessionFactory(
-            @Qualifier("studentDataSource") DataSource dataSource) throws Exception {
+    @Bean(name = "authSqlSessionFactory")
+    public SqlSessionFactory authSqlSessionFactory(
+            @Qualifier("authDataSource") DataSource dataSource) throws Exception {
 
         SqlSessionFactoryBean bean = new SqlSessionFactoryBean();
         bean.setDataSource(dataSource);
         bean.setMapperLocations(
                 new PathMatchingResourcePatternResolver()
-                        .getResources("classpath*:mapper/student/*.xml"));
-        bean.setTypeAliasesPackage("com.riptidez.notebackend.entity.student");
+                        .getResources("classpath*:mapper/auth/*.xml"));
+        bean.setTypeAliasesPackage("com.riptidez.notebackend.auth.entity");
         return bean.getObject();
     }
 
     @Primary
-    @Bean(name = "studentSqlSessionTemplate")
-    public SqlSessionTemplate studentSqlSessionTemplate(
-            @Qualifier("studentSqlSessionFactory") SqlSessionFactory sqlSessionFactory) {
+    @Bean(name = "authSqlSessionTemplate")
+    public SqlSessionTemplate authSqlSessionTemplate(
+            @Qualifier("authSqlSessionFactory") SqlSessionFactory sqlSessionFactory) {
         return new SqlSessionTemplate(sqlSessionFactory);
     }
 }

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.riptidez.notebackend.note.mapper.NoteHistoryMapper">
+
+    <!-- 映射 NoteHistory 实体 -->
+    <resultMap id="NoteHistoryResultMap" type="NoteHistory">
+        <id property="id" column="id"/>
+        <result property="noteId" column="note_id"/>
+        <result property="version" column="version"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="content" column="content"/>
+        <result property="changeSummary" column="change_summary"/>
+    </resultMap>
+
+    <!--  -->
+    <insert id="insert" parameterType="NoteHistory"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO notehistory (
+        note_id,
+        version,
+        created_time,
+        content,
+        change_summary
+        ) VALUES (
+        #{noteId},
+        #{version},
+        #{createdTime},
+        #{content},
+        #{changeSummary}
+        )
+    </insert>
+
+    <!--  -->
+    <select id="findByNoteId" parameterType="long"
+            resultMap="NoteHistoryResultMap">
+        SELECT id,
+        note_id,
+        version,
+        created_time,
+        content,
+        change_summary
+        FROM notehistory
+        WHERE note_id = #{noteId}
+        ORDER BY version ASC
+    </select>
+
+    <!--  -->
+    <select id="findByNoteIdAndVersion" resultMap="NoteHistoryResultMap">
+        SELECT id,
+        note_id,
+        version,
+        created_time,
+        content,
+        change_summary
+        FROM notehistory
+        WHERE note_id = #{noteId}
+        AND version = #{version}
+        LIMIT 1
+    </select>
+
+    <!--  -->
+    <select id="findLatestByNoteId" resultMap="NoteHistoryResultMap">
+        SELECT id,
+        note_id,
+        version,
+        created_time,
+        content,
+        change_summary
+        FROM notehistory
+        WHERE note_id = #{noteId}
+        ORDER BY version DESC
+        LIMIT 1
+    </select>
+
+</mapper>

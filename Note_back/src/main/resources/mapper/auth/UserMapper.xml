@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.riptidez.notebackend.auth.mapper.UserMapper">
+
+    <!-- 映射 User 实体 -->
+    <resultMap id="UserResultMap" type="com.riptidez.notebackend.auth.entity.User">
+        <id     property="id"            column="id"/>
+        <result property="username"      column="username"/>
+        <result property="passwordHash"  column="password_hash"/>
+        <result property="noteStructure" column="note_structure"/>
+    </resultMap>
+
+    <!-- 用于查询密码 -->
+    <resultMap id="UserHashResultMap" type="com.riptidez.notebackend.auth.entity.User">
+        <id     property="id"           column="id"/>
+        <result property="passwordHash" column="password_hash"/>
+    </resultMap>
+
+    <!-- 根据用户名查询用户密码 -->
+    <select id="findHashByUsername"
+            parameterType="java.lang.String"
+            resultMap="UserHashResultMap">
+        SELECT id,
+               password_hash
+        FROM user
+        WHERE username = #{username}
+        LIMIT 1
+    </select>
+
+    <!-- 根据 id 查询用户，不查密码和笔记结构 -->
+    <select id="findById"
+            parameterType="java.lang.Long"
+            resultMap="UserResultMap">
+        SELECT id,
+               username
+        FROM user
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <!-- 插入新用户，主键自增 -->
+    <insert id="insert"
+            parameterType="com.riptidez.notebackend.auth.entity.User"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO user (
+            username,
+            password_hash,
+            note_structure
+        ) VALUES (
+                     #{username},
+                     #{passwordHash},
+                     #{noteStructure}
+                 )
+    </insert>
+
+    <!-- 更新用户的 note_structure -->
+    <update id="updateNoteStructure">
+        UPDATE user
+        SET note_structure = #{noteStructure}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

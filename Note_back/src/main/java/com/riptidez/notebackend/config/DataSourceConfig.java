@@ -8,50 +8,49 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
-
 /**
- * 只负责创建两个 XA DataSource（DruidXA + Atomikos）
+ * 两个 XA DataSource的配置（DruidXA + Atomikos）
  */
 @Configuration
 public class DataSourceConfig {
 
-    // ===================== student_db =====================
+    // ===================== auth_db =====================
 
-    @Bean(name = "studentDruidXADataSource")
-    @ConfigurationProperties(prefix = "spring.datasource.druid.student-db")
-    public DruidXADataSource studentDruidXADataSource() {
+    @Bean(name = "authDruidXADataSource")
+    @ConfigurationProperties(prefix = "spring.datasource.druid.auth-db")
+    public DruidXADataSource authDruidXADataSource() {
         return new DruidXADataSource();
     }
 
     @Primary
-    @Bean(name = "studentDataSource", initMethod = "init", destroyMethod = "close")
-    @ConfigurationProperties(prefix = "spring.jta.atomikos.datasource.student")
-    public AtomikosDataSourceBean studentDataSource(
-            @Qualifier("studentDruidXADataSource") DruidXADataSource druidXADataSource) {
+    @Bean(name = "authDataSource", initMethod = "init", destroyMethod = "close")
+    @ConfigurationProperties(prefix = "spring.jta.atomikos.datasource.auth")
+    public AtomikosDataSourceBean authDataSource(
+            @Qualifier("authDruidXADataSource") DruidXADataSource druidXADataSource) {
 
         AtomikosDataSourceBean xaDataSource = new AtomikosDataSourceBean();
         xaDataSource.setXaDataSource(druidXADataSource);
-        xaDataSource.setUniqueResourceName("studentDbXA"); // 必须唯一
+        xaDataSource.setUniqueResourceName("authDbXA");
 
         return xaDataSource;
     }
 
-    // ===================== log_db =====================
+    // ===================== note_db =====================
 
-    @Bean(name = "logDruidXADataSource")
-    @ConfigurationProperties(prefix = "spring.datasource.druid.log-db")
-    public DruidXADataSource logDruidXADataSource() {
+    @Bean(name = "noteDruidXADataSource")
+    @ConfigurationProperties(prefix = "spring.datasource.druid.note-db")
+    public DruidXADataSource noteDruidXADataSource() {
         return new DruidXADataSource();
     }
 
-    @Bean(name = "logDataSource", initMethod = "init", destroyMethod = "close")
-    @ConfigurationProperties(prefix = "spring.jta.atomikos.datasource.log")
-    public AtomikosDataSourceBean logDataSource(
-            @Qualifier("logDruidXADataSource") DruidXADataSource druidXADataSource) {
+    @Bean(name = "noteDataSource", initMethod = "init", destroyMethod = "close")
+    @ConfigurationProperties(prefix = "spring.jta.atomikos.datasource.note")
+    public AtomikosDataSourceBean noteDataSource(
+            @Qualifier("noteDruidXADataSource") DruidXADataSource druidXADataSource) {
 
         AtomikosDataSourceBean xaDataSource = new AtomikosDataSourceBean();
         xaDataSource.setXaDataSource(druidXADataSource);
-        xaDataSource.setUniqueResourceName("logDbXA");
+        xaDataSource.setUniqueResourceName("noteDbXA");
 
         return xaDataSource;
     }

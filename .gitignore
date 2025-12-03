@@ -7,3 +7,5 @@ Note_back/target/
 
 Note_front/.vs/
 Note_front/out/
+
+Note_back/src/main/resources/db_credential.yml
