@@ -14,7 +14,7 @@
 
     <groupId>com.riptidez</groupId>
     <artifactId>note-backend</artifactId>
-    <version>1.0.0</version>
+    <version>0.2</version>
     <name>R-Note</name>
     <description>R-Note Project Backend</description>
 

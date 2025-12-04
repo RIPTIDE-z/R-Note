@@ -10,7 +10,12 @@ spring:
 
   # 在db_credential.yml填写用户信息
   config:
-    import: "classpath:config/db_credential.yml"
+    # 两种数据库配置文件位置，按需更改
+    import:
+      # 基于classpath,硬编码
+      - classpath:config/db_credential.yml
+      # 基于外部文件
+      # - optional:file:config/db_credential.yml
 
   datasource:
     druid:

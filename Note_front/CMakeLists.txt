@@ -11,38 +11,10 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Gui Core Widgets Network)
 
-file(GLOB_RECURSE AUTH_SRCS
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/auth/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/auth/*.h"
-)
+# 添加主程序
+add_subdirectory(NoteApp)
 
-file(GLOB_RECURSE EDITOR_SRCS
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/editor/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/editor/*.h"
-)
-
-file(GLOB_RECURSE HTTP_SRCS
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/http/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/http/*.h"
-)
-
-set(SOURCES
-    ${AUTH_SRCS}
-    ${EDITOR_SRCS}
-    ${HTTP_SRCS}
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/resource/resource.qrc"
-)
-
-qt_add_executable(${PROJECT_NAME}
-    WIN32  
-    ${SOURCES}
-)
-
-target_link_libraries(${PROJECT_NAME}
-    PRIVATE
-        Qt6::Core
-        Qt6::Gui
-        Qt6::Network
-        Qt6::Widgets
-)
+# 添加子模块
+add_subdirectory(src/Auth)
+add_subdirectory(src/Editor)
+add_subdirectory(src/Http)
