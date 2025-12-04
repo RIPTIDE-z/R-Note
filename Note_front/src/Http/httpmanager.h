@@ -12,12 +12,12 @@ class HttpManager : public QObject
 public:
     explicit HttpManager(QObject* parent = nullptr);
 
-    // 用户注册
+    // 用户注册/登录
     void registerUser(const QString& username, const QString& password);
-    // 用户登录
     void login(const QString& username, const QString& password);
-    // 用户退出登录
     void logout(const QString& token);
+
+    void serBaseUrl(const QString& url);
 
 signals:
     // 注册结果

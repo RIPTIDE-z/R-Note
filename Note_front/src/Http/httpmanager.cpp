@@ -1,10 +1,12 @@
 #include "httpmanager.h"
+#include "hash_processor.h"
 
 #include <QNetworkRequest>
 #include <QJsonDocument>
 #include <QFile>
 #include <QStandardPaths>
 #include <QDir>
+#include <QCryptographicHash>
 
 HttpManager::HttpManager(QObject* parent)
     : QObject(parent)
@@ -14,6 +16,11 @@ HttpManager::HttpManager(QObject* parent)
         this, &HttpManager::onReplyFinished);
 }
 
+void HttpManager::serBaseUrl(const QString& url)
+{
+    m_baseUrl = url;
+}
+
 // POST /auth/register
 void HttpManager::registerUser(const QString& username, const QString& password)
 {
@@ -21,9 +28,12 @@ void HttpManager::registerUser(const QString& username, const QString& password)
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
+    
+
     QJsonObject body;
     body["username"] = username;
-    body["passwordHash"] = password;
+    // 密码进行sha256加密
+    body["passwordHash"] = HashEncrypt(password);
 
     QNetworkReply* reply =
         m_manager.post(request, QJsonDocument(body).toJson());
@@ -39,7 +49,7 @@ void HttpManager::login(const QString& username, const QString& password)
 
     QJsonObject body;
     body["username"] = username;
-    body["passwordHash"] = password;
+    body["passwordHash"] = HashEncrypt(password);
 
     QNetworkReply* reply =
         m_manager.post(request, QJsonDocument(body).toJson());

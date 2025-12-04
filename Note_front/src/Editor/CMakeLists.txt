@@ -1,6 +1,6 @@
 target_sources(${PROJECT_NAME}
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/editorwindow.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/editor_window.cpp
 )
 target_include_directories(${PROJECT_NAME}
     PRIVATE

@@ -1,4 +1,4 @@
-#include "editorwindow.h"
+#include "editor_window.h"
 #include "httpmanager.h"
 
 #include <QWidget>
@@ -22,14 +22,14 @@ EditorWindow::EditorWindow(HttpManager* http, QWidget* parent)
     mainLayout->setContentsMargins(16, 16, 16, 16);
 
     // 中间一大片空白（将来放编辑器）
-    auto* blank = new QLabel("Editor area (TODO)", this);
+    auto* blank = new QLabel("编辑区域", this);
     blank->setAlignment(Qt::AlignCenter);
     blank->setStyleSheet("background-color: #202020; color: #aaaaaa;");
     mainLayout->addWidget(blank, 1);
 
     // 底部一行：左下角 Logout 按钮
     auto* bottomLayout = new QHBoxLayout();
-    m_logoutButton = new QPushButton("Logout", this);
+    m_logoutButton = new QPushButton("登出", this);
     bottomLayout->addWidget(m_logoutButton);
     bottomLayout->addStretch();
 

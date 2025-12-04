@@ -1,4 +1,4 @@
-#include "registerwindow.h"
+#include "register_window.h"
 #include "httpmanager.h"
 
 #include <QVBoxLayout>
