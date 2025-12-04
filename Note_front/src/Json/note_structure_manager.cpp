@@ -10,14 +10,24 @@ NoteStructureManager::NoteStructureManager(QObject* parent)
 {
 }
 
-// ========== 生成自增 ID ==========
+/**
+ * 生成自增ID
+ * @param nextId 
+ * @return 
+ */
 QString NoteStructureManager::generateId(int& nextId) const
 {
     return QString::number(nextId++);
 }
 
 // ========== JSON解析 ==========
-// 将JSON对象解析为NoteNode树结构
+/**
+ * @brief 将QJSON对象解析为NoteNode树结构
+ * @param obj         要解析的QJson对象
+ * @param maxIdInOut 
+ * @param parentPath 
+ * @return 
+ */
 std::unique_ptr<NoteNode> NoteStructureManager::fromJson(
     const QJsonObject& obj,
     int& maxIdInOut,
@@ -52,6 +62,7 @@ std::unique_ptr<NoteNode> NoteStructureManager::fromJson(
         }
     }
 
+    // 更新当前路径
     QString currentPath = parentPath + "/" + node->name;
     node->fullPath = currentPath;
 
@@ -72,6 +83,12 @@ std::unique_ptr<NoteNode> NoteStructureManager::fromJson(
     return node;
 }
 
+/**
+ * @brief 解析出Json文件中的根节点
+ * @param filePath 
+ * @param maxIdOut 
+ * @return 
+ */
 std::unique_ptr<NoteNode> NoteStructureManager::loadFromJsonFile(
     const QString& filePath, int& maxIdOut)
 {
@@ -96,7 +113,11 @@ std::unique_ptr<NoteNode> NoteStructureManager::loadFromJsonFile(
     return fromJson(rootObj, maxIdOut, QString());
 }
 
-// ========== JSON 生成 ==========
+/**
+ * 将NoteNode树结构解析为QJson对象
+ * @param node 
+ * @return 
+ */
 QJsonObject NoteStructureManager::toJson(const NoteNode* node) const
 {
     QJsonObject obj;
@@ -108,6 +129,7 @@ QJsonObject NoteStructureManager::toJson(const NoteNode* node) const
         obj["remoteNoteId"] = static_cast<qint64>(*node->remoteNoteId);
     }
 
+    // 递归解析
     if (node->type == NoteNodeType::Folder) {
         QJsonArray arr;
         for (const auto& child : node->children) {
@@ -119,6 +141,11 @@ QJsonObject NoteStructureManager::toJson(const NoteNode* node) const
     return obj;
 }
 
+/**
+ * 将NoteNode树结构存到Json文件
+ * @param filePath 要保存到的文件路径
+ * @param root     NoteNode根节点
+ */
 void NoteStructureManager::saveToJsonFile(const QString& filePath, const NoteNode* root)
 {
     if (!root) {
@@ -126,6 +153,7 @@ void NoteStructureManager::saveToJsonFile(const QString& filePath, const NoteNod
         return;
     }
 
+    // 先将树解析为QJSON对象
     QJsonObject rootObj = toJson(root);
     QJsonDocument doc(rootObj);
 

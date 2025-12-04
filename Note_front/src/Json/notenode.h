@@ -10,7 +10,7 @@ enum class NoteNodeType
     Note
 };
 
-// 适用于文件/文件夹的结构体，实际上为树结构
+// 适用于文件/文件夹的结构体，实际为树结构
 struct NoteNode
 {
     QString id;                                  // 节点唯一 ID

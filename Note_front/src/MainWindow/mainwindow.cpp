@@ -9,12 +9,8 @@ MainWindow::MainWindow(HttpManager* http, QWidget* parent)
     : QMainWindow(parent),
       stacked_(new QStackedWidget(this))
 {
-
-    setFixedSize(400, 400);
-
-
     setWindowTitle("R-Note");
-    setFixedSize(500, 500);
+    resize(500, 500);
     setStyleSheet(
         "QWidget { background-color: #111111; color: white; }"
         "QLineEdit { background-color: #1e1e1e; border: 1px solid #444444; "
@@ -28,6 +24,12 @@ MainWindow::MainWindow(HttpManager* http, QWidget* parent)
     loginPage_ = new LoginWindow(http);
     regPage_ = new RegisterWindow(http);
     editorPage_ = new EditorWindow(http);
+
+    // ===== 硬编码测试用的 JSON 和根目录路径 =====
+    const QString jsonPath = QStringLiteral("D:/桌面/1/test.json");
+    const QString rootDir = QStringLiteral("D:/桌面/1/example");
+    // 初始化左侧 TreeView（只为看渲染效果）
+    editorPage_->initNoteTree(jsonPath, rootDir);
 
     // 添加到 stacked
     stacked_->addWidget(loginPage_);
@@ -49,12 +51,30 @@ MainWindow::MainWindow(HttpManager* http, QWidget* parent)
     connect(loginPage_, &LoginWindow::loginSucceeded,
         this, [&](const QString& token, const QJsonObject& noteStruct) {
             editorPage_->setToken(token);
+            // 进入编辑器时放大一点
+            resizeKeepCenter(this, 1440, 900);
             stacked_->setCurrentWidget(editorPage_);
         });
 
     connect(editorPage_, &EditorWindow::logoutSucceeded,
         this, [this]() {
+            // 回到登录界面时缩回去
+            resizeKeepCenter(this, 500, 500);
             stacked_->setCurrentWidget(loginPage_);
         });
 
+}
+
+void MainWindow::resizeKeepCenter(QWidget* w, int newWidth, int newHeight)
+{
+    // 当前窗口的中心点（屏幕坐标）
+    QPoint center = w->frameGeometry().center();
+
+    // 改大小
+    w->resize(newWidth, newHeight);
+
+    // 用新的大小重新计算左上角，让中心点保持不变
+    QRect newGeom = w->frameGeometry();
+    newGeom.moveCenter(center);
+    w->move(newGeom.topLeft());
 }

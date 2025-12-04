@@ -18,4 +18,6 @@ private:
     LoginWindow* loginPage_;
     RegisterWindow* regPage_;
     EditorWindow* editorPage_;
+
+    static void resizeKeepCenter(QWidget* w, int newWidth, int newHeight);
 };
