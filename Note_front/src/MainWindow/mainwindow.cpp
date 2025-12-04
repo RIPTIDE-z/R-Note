@@ -42,13 +42,16 @@ MainWindow::MainWindow(HttpManager* http, QWidget* parent)
     // 信号连接：切换页面
     connect(loginPage_, &LoginWindow::requestShowRegister,
         this, [this]() { stacked_->setCurrentWidget(regPage_); });
+
     connect(regPage_, &RegisterWindow::requestShowLogin,
         this, [this]() { stacked_->setCurrentWidget(loginPage_); });
+
     connect(loginPage_, &LoginWindow::loginSucceeded,
         this, [&](const QString& token, const QJsonObject& noteStruct) {
             editorPage_->setToken(token);
             stacked_->setCurrentWidget(editorPage_);
         });
+
     connect(editorPage_, &EditorWindow::logoutSucceeded,
         this, [this]() {
             stacked_->setCurrentWidget(loginPage_);

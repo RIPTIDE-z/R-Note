@@ -3,10 +3,8 @@
 
 #include <QNetworkRequest>
 #include <QJsonDocument>
-#include <QFile>
 #include <QStandardPaths>
 #include <QDir>
-#include <QCryptographicHash>
 
 HttpManager::HttpManager(QObject* parent)
     : QObject(parent)
