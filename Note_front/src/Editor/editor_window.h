@@ -9,6 +9,7 @@ class QStandardItemModel;
 class NoteStructureManager;
 struct NoteNode;
 class QModelIndex;
+class QPropertyAnimation;    // 新增：前向声明动画类
 
 namespace Ui {
     class EditorWindow;
@@ -35,6 +36,9 @@ private slots:
     void onNetworkError(const QString& error);
     void onTreeItemDoubleClicked(const QModelIndex& index);
 
+    // 新增：点击“大纲”按钮时切换左侧大纲面板（展开/收起）
+    void onOutlineButtonClicked();
+
 private:
     Ui::EditorWindow* ui = nullptr;
 
@@ -45,6 +49,11 @@ private:
 
     NoteStructureManager* m_structureMgr = nullptr;
     std::unique_ptr<NoteNode> m_rootNode;
+
+    // ====== 新增：大纲面板动画相关成员 ======
+    QPropertyAnimation* m_outlineAnim = nullptr;  // 控制 leftPanel 最大宽度的动画
+    bool m_outlineVisible = true;                 // 当前大纲是否处于“展开显示”状态
+    int  m_outlineTargetWidth = 260;             // 大纲展开后的目标宽度（可根据需要调整）
 };
 
 #endif // EDITORWINDOW_H

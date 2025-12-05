@@ -46,7 +46,6 @@
 		<number>16</number>
 	  </property>
 
-	  <!-- 标题 “创建账号” -->
 	  <item>
 		<widget class="QLabel" name="titleLabel">
 		  <property name="text">
@@ -65,7 +64,6 @@
 		</widget>
 	  </item>
 
-	  <!-- 描述文字 -->
 	  <item>
 		<widget class="QLabel" name="descLabel">
 		  <property name="text">
@@ -80,7 +78,6 @@
 		</widget>
 	  </item>
 
-	  <!-- 用户名 -->
 	  <item>
 		<widget class="QLabel" name="usernameLabel">
 		  <property name="text">
@@ -96,7 +93,6 @@
 		</widget>
 	  </item>
 
-	  <!-- 密码 -->
 	  <item>
 		<widget class="QLabel" name="passwordLabel">
 		  <property name="text">
@@ -112,7 +108,6 @@
 		</widget>
 	  </item>
 
-	  <!-- 提示信息 -->
 	  <item>
 		<widget class="QLabel" name="messageLabel">
 		  <property name="text">
@@ -121,7 +116,6 @@
 		</widget>
 	  </item>
 
-	  <!-- 注册按钮 -->
 	  <item>
 		<widget class="QPushButton" name="registerButton">
 		  <property name="text">
@@ -130,7 +124,6 @@
 		</widget>
 	  </item>
 
-	  <!-- 伸缩，相当于 addStretch() -->
 	  <item>
 		<spacer name="verticalSpacerBottom">
 		  <property name="orientation">
@@ -145,14 +138,12 @@
 		</spacer>
 	  </item>
 
-	  <!-- 底部 “已经有账号了？ 登录” -->
 	  <item>
 		<layout class="QHBoxLayout" name="bottomLayout">
 		  <property name="spacing">
 			<number>4</number>
 		  </property>
 
-		  <!-- 左侧伸缩 -->
 		  <item>
 			<spacer name="horizontalSpacerLeft">
 			  <property name="orientation">
@@ -167,7 +158,6 @@
 			</spacer>
 		  </item>
 
-		  <!-- 提示文字 -->
 		  <item>
 			<widget class="QLabel" name="tipLabel">
 			  <property name="text">
@@ -175,8 +165,7 @@
 			  </property>
 			</widget>
 		  </item>
-
-		  <!-- 中间小间隔（相当于 addSpacing(4)） -->
+>
 		  <item>
 			<spacer name="horizontalSpacerMiddle">
 			  <property name="orientation">
@@ -191,7 +180,6 @@
 			</spacer>
 		  </item>
 
-		  <!-- 登录标签 -->
 		  <item>
 			<widget class="QLabel" name="signInLabel">
 			  <property name="text">
@@ -203,7 +191,6 @@
 			</widget>
 		  </item>
 
-		  <!-- 右侧伸缩 -->
 		  <item>
 			<spacer name="horizontalSpacerRight">
 			  <property name="orientation">

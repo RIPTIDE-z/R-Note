@@ -19,7 +19,6 @@ int main(int argc, char* argv[]) {
 
     
     HttpManager http;  
-    //http.serBaseUrl("http://127.0.0.1:4523/m1/7498555-7234115-default");
     MainWindow w(&http);
     w.show();
 
