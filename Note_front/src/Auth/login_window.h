@@ -3,17 +3,20 @@
 
 #include <QWidget>
 
-class QLineEdit;
-class QLabel;
-class QPushButton;
 class HttpManager;
 class QJsonObject;
+class QEvent;
+
+namespace Ui {
+    class LoginWindow;
+}
 
 class LoginWindow : public QWidget
 {
     Q_OBJECT
 public:
     explicit LoginWindow(HttpManager* http, QWidget* parent = nullptr);
+    ~LoginWindow() override;
 
 protected:
     bool eventFilter(QObject* obj, QEvent* event) override;
@@ -31,11 +34,8 @@ private slots:
     void onNetworkError(const QString& error);
 
 private:
+    Ui::LoginWindow* ui;
     HttpManager* m_http;
-    QLineEdit* m_usernameEdit;
-    QLineEdit* m_passwordEdit;
-    QPushButton* m_loginButton;
-    QLabel* m_messageLabel;
 };
 
 #endif // LOGINWINDOW_H

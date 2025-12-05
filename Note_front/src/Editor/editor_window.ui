@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui version="4.0">
+  <class>EditorWindow</class>
+  <widget class="QMainWindow" name="EditorWindow">
+	<property name="geometry">
+	  <rect>
+		<x>0</x>
+		<y>0</y>
+		<width>1000</width>
+		<height>600</height>
+	  </rect>
+	</property>
+	<property name="windowTitle">
+	  <string>Note Editor</string>
+	</property>
+	<widget class="QWidget" name="centralwidget">
+	  <layout class="QHBoxLayout" name="mainHLayout">
+		<property name="leftMargin">
+		  <number>16</number>
+		</property>
+		<property name="topMargin">
+		  <number>16</number>
+		</property>
+		<property name="rightMargin">
+		  <number>16</number>
+		</property>
+		<property name="bottomMargin">
+		  <number>16</number>
+		</property>
+		<property name="spacing">
+		  <number>12</number>
+		</property>
+
+		<!-- ========= 左侧：TreeView + Logout ========= -->
+		<item>
+		  <layout class="QVBoxLayout" name="leftLayout">
+			<property name="spacing">
+			  <number>8</number>
+			</property>
+
+			<!-- TreeView -->
+			<item>
+			  <widget class="QTreeView" name="treeView">
+				<property name="minimumWidth">
+				  <number>220</number>
+				</property>
+				<property name="alternatingRowColors">
+				  <bool>true</bool>
+				</property>
+				<property name="headerHidden">
+				  <bool>false</bool>
+				</property>
+				<property name="styleSheet">
+				  <string notr="true">
+					QTreeView {
+					background-color: #181818;
+					alternate-background-color: #202020;
+					color: #dddddd;
+					border: 1px solid #333333;
+					}
+					QTreeView::item:selected {
+					background-color: #3b2f5c;
+					color: #ffffff;
+					}
+					QTreeView::item:hover {
+					background-color: #252525;
+					}
+					QHeaderView::section {
+					background-color: #202020;
+					color: #cccccc;
+					border: none;
+					padding: 4px;
+					}
+				  </string>
+				</property>
+			  </widget>
+			</item>
+
+			<!-- 左侧底部：登出按钮条 -->
+			<item>
+			  <layout class="QHBoxLayout" name="leftBottomBar">
+				<item>
+				  <widget class="QPushButton" name="logoutButton">
+					<property name="text">
+					  <string>登出</string>
+					</property>
+				  </widget>
+				</item>
+				<item>
+				  <spacer name="horizontalSpacerLogout">
+					<property name="orientation">
+					  <enum>Qt::Horizontal</enum>
+					</property>
+					<property name="sizeHint">
+					  <size>
+						<width>40</width>
+						<height>20</height>
+					  </size>
+					</property>
+				  </spacer>
+				</item>
+			  </layout>
+			</item>
+		  </layout>
+		</item>
+
+		<!-- ========= 右侧：编辑区域占位 ========= -->
+		<item>
+		  <layout class="QVBoxLayout" name="rightLayout">
+			<property name="spacing">
+			  <number>8</number>
+			</property>
+			<item>
+			  <widget class="QLabel" name="editorPlaceholderLabel">
+				<property name="text">
+				  <string>编辑区域</string>
+				</property>
+				<property name="alignment">
+				  <set>Qt::AlignCenter</set>
+				</property>
+				<property name="styleSheet">
+				  <string notr="true">background-color: #202020; color: #aaaaaa;</string>
+				</property>
+			  </widget>
+			</item>
+		  </layout>
+		</item>
+
+	  </layout>
+	</widget>
+	<widget class="QMenuBar" name="menubar">
+	  <property name="geometry">
+		<rect>
+		  <x>0</x>
+		  <y>0</y>
+		  <width>1000</width>
+		  <height>22</height>
+		</rect>
+	  </property>
+	</widget>
+	<widget class="QStatusBar" name="statusbar"/>
+  </widget>
+  <resources/>
+  <connections/>
+</ui>
