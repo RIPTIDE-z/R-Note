@@ -1,14 +1,22 @@
 #include "mainwindow.h"
+
+#include <QVBoxLayout>
+
 #include "login_window.h"
 #include "register_window.h"
 #include "editor_window.h"
 #include "httpmanager.h"  
+#include "title_bar.h"
 
 
 MainWindow::MainWindow(HttpManager* http, QWidget* parent)
     : QMainWindow(parent),
       stacked_(new QStackedWidget(this))
 {
+    // 1. 先去掉系统标题栏
+    setWindowFlags(windowFlags() | Qt::FramelessWindowHint);
+
+    // 2. 原来的代码照写
     setWindowTitle("R-Note");
     resize(500, 500);
     setStyleSheet(
@@ -25,21 +33,32 @@ MainWindow::MainWindow(HttpManager* http, QWidget* parent)
     regPage_ = new RegisterWindow(http);
     editorPage_ = new EditorWindow(http);
 
-    // ===== 硬编码测试用的 JSON 和根目录路径 =====
     const QString jsonPath = QStringLiteral("D:/桌面/1/test.json");
     const QString rootDir = QStringLiteral("D:/桌面/1/example");
-    // 初始化左侧 TreeView（只为看渲染效果）
     editorPage_->initNoteTree(jsonPath, rootDir);
 
-    // 添加到 stacked
+    stacked_ = new QStackedWidget(this);
     stacked_->addWidget(loginPage_);
     stacked_->addWidget(regPage_);
     stacked_->addWidget(editorPage_);
-
-    setCentralWidget(stacked_);
-
-    // 初始为登录页面
     stacked_->setCurrentWidget(loginPage_);
+
+    // 3. 新建一个 central 容器，把标题栏 + stacked_ 放进去
+    auto* central = new QWidget(this);
+    auto* layout = new QVBoxLayout(central);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+
+    // 标题栏，传入要控制的窗口 this
+    auto* titleBar = new CustomTitleBar(this, central);
+    // 想固定高度的话，可以自己设，比如：
+    // titleBar->setFixedHeight(40);
+    // 或用 qss: CustomTitleBar { min-height: 40px; }
+
+    layout->addWidget(titleBar);
+    layout->addWidget(stacked_);
+
+    setCentralWidget(central);
 
     // 信号连接：切换页面
     connect(loginPage_, &LoginWindow::requestShowRegister,
