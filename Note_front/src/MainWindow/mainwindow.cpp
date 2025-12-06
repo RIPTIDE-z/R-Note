@@ -15,9 +15,7 @@ MainWindow::MainWindow(HttpManager* http, QWidget* parent)
       stacked_(new QStackedWidget(this))
 {
 
-
-
-    setWindowTitle("R-Note");
+    setWindowTitle("");
     resize(500, 500);
     setStyleSheet(
         "QWidget { background-color: #111111; color: white; }"
@@ -32,10 +30,6 @@ MainWindow::MainWindow(HttpManager* http, QWidget* parent)
     loginPage_ = new LoginWindow(http);
     regPage_ = new RegisterWindow(http);
     editorPage_ = new EditorWindow(http);
-
-    const QString jsonPath = QStringLiteral("D:/桌面/1/test.json");
-    const QString rootDir = QStringLiteral("D:/桌面/1/example");
-    editorPage_->initNoteTree(jsonPath, rootDir);
 
     stacked_ = new QStackedWidget(this);
     stacked_->addWidget(loginPage_);
@@ -87,7 +81,7 @@ MainWindow::MainWindow(HttpManager* http, QWidget* parent)
             editorPage_->setToken(token);
             // 进入编辑器时放大一点
             resizeKeepCenter(this, 1440, 900);
-            stacked_->setCurrentWidget(editorPage_);
+            stacked_->setCurrentWidget(editorPage_); 
         });
 
     connect(editorPage_, &EditorWindow::logoutSucceeded,

@@ -14,7 +14,7 @@ HttpManager::HttpManager(QObject* parent)
         this, &HttpManager::onReplyFinished);
 }
 
-void HttpManager::serBaseUrl(const QString& url)
+void HttpManager::setBaseUrl(const QString& url)
 {
     m_baseUrl = url;
 }

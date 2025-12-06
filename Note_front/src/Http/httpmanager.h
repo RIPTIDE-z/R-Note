@@ -17,7 +17,7 @@ public:
     void login(const QString& username, const QString& password);
     void logout(const QString& token);
 
-    void serBaseUrl(const QString& url);
+    void setBaseUrl(const QString& url);
 
 signals:
     // 注册结果
