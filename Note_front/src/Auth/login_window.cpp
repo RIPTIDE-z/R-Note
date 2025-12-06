@@ -44,7 +44,6 @@ LoginWindow::LoginWindow(HttpManager* http,
     connect(ui->configButton, &QPushButton::clicked,
         this, &LoginWindow::onConfigButtonClicked);
 
-
 }
 
 LoginWindow::~LoginWindow()
@@ -75,11 +74,9 @@ void LoginWindow::onLoginClicked()
     }
 
     // 强制要求先配置好 Base URL 和 Project Root（和注册窗口保持一致）
-    if (!m_config ||
-        m_config->baseUrl().isEmpty() ||
-        m_config->projectRoot().isEmpty()) {
+    if (!m_config || m_config->projectRoot().isEmpty()) {
         ui->messageLabel->setText(
-            QStringLiteral("请先点击“配置…”设置 Base URL 和 Project Root"));
+            QStringLiteral("请先点击“配置…”设置 Project Root"));
         return;
     }
 

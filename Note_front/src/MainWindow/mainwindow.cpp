@@ -97,10 +97,16 @@ MainWindow::MainWindow(AppConfig* config, HttpManager* http, NoteStructureManage
         this,
         [this](const QString& projectRoot)
         {
-            editorPage_->updateNoteTree(
+            editorPage_->initNoteTree(
                 projectRoot + "/.Note/note_structure.json",
                 projectRoot
             );
+        });
+
+    connect(config, &AppConfig::baseUrlChanged,
+        this, [this, http](const QString& url)
+        {
+            http->setBaseUrl(url);
         });
 
 }

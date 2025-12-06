@@ -66,11 +66,9 @@ void RegisterWindow::onRegisterClicked()
     }
 
     // 强制要求先配置好 Base URL 和 Project Root
-    if (!m_config ||
-        m_config->baseUrl().isEmpty() ||
-        m_config->projectRoot().isEmpty()) {
+    if (!m_config || m_config->projectRoot().isEmpty()) {
         ui->messageLabel->setText(
-            QStringLiteral("请先点击“配置…”设置 Base URL 和 Project Root"));
+            QStringLiteral("请先点击“配置…”设置 Project Root"));
         return;
     }
 

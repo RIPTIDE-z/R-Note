@@ -83,7 +83,7 @@ ConfigDialog::ConfigDialog(const QString& baseUrl,
     formLayout->setVerticalSpacing(10);
 
     m_baseUrlEdit = new QLineEdit(content);
-    m_baseUrlEdit->setPlaceholderText(tr("例如：http://127.0.0.1:8080"));
+    m_baseUrlEdit->setPlaceholderText(tr("默认url为：http://127.0.0.1:8080"));
     m_baseUrlEdit->setText(baseUrl);
     formLayout->addRow(tr("Base URL："), m_baseUrlEdit);
 
@@ -161,8 +161,8 @@ void ConfigDialog::onAcceptClicked()
     const QString projectDir = m_projectRootEdit->text().trimmed();
 
     // 判空
-    if (baseUrl.isEmpty() || projectDir.isEmpty()) {
-        m_errorLabel->setText(tr("Base URL 和 Project Root 都不能为空。"));
+    if (projectDir.isEmpty()) {
+        m_errorLabel->setText(tr("Project Root 不能为空"));
         return;
     }
 

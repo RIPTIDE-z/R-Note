@@ -12,8 +12,10 @@
 #include <QStandardItemModel>
 #include <QAbstractItemView>
 #include <QFile>
+#include <qfileinfo.h>
 #include <QSplitter>
 #include <QList>
+#include <QDir>
 
 #include "app_config.h"
 
@@ -105,6 +107,13 @@ EditorWindow::EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent
         this, &EditorWindow::onLogoutResult);
     connect(m_http, &HttpManager::networkError,
         this, &EditorWindow::onNetworkError);
+    connect(m_http, &HttpManager::updateNoteStructureResult,
+        this, &EditorWindow::onUpdateResult);
+    connect(m_http, &HttpManager::fetchNoteStructureResult,
+        this, &EditorWindow::onFetchResult);
+
+    
+
 
     connect(ui->treeView, &QTreeView::doubleClicked,
         this, &EditorWindow::onTreeItemDoubleClicked);
@@ -141,9 +150,10 @@ void EditorWindow::onLogoutClicked()
     m_http->logout(m_token);
 }
 
-// 更新逻辑
+// 更新逻辑：先重建本地结构，再上传
 void EditorWindow::onUpdateClicked()
 {
+    // TODO:弹出确认窗口
     if (!m_config) {
         qDebug() << "Config is null, cannot update note structure";
         return;
@@ -155,20 +165,32 @@ void EditorWindow::onUpdateClicked()
         return;
     }
 
+    if (m_token.isEmpty()) {
+        qDebug() << "Token is empty, cannot update";
+        return;
+    }
+
     const QString filePath = rootDir + "/.Note/note_structure.json";
 
-    QFile f(filePath);
-    if (!f.open(QIODevice::ReadOnly)) {
-        qDebug() << "无法读取 json 文件，尝试新建：" << filePath << f.errorString();
-
-        // 调用同一个类的创建逻辑，在这个路径下生成默认结构
-        updateNoteTree(filePath, rootDir);
-
-        // 新建之后再尝试打开
-        if (!f.open(QIODevice::ReadOnly)) {
-            qDebug() << "创建后仍无法打开 json 文件：" << filePath << f.errorString();
+    // 确保目录存在
+    QFileInfo info(filePath);
+    QDir dir = info.dir();
+    if (!dir.exists()) {
+        if (!dir.mkpath(".")) {
+            qDebug() << "Failed to create dir for note_structure.json:"
+                << dir.absolutePath();
             return;
         }
+    }
+
+    // 1) 每次更新前都重新扫描目录 + JSON，重建树并写入 json 文件
+    initNoteTree(filePath, rootDir);
+
+    // 2) 读取刚刚生成的 json 文件
+    QFile f(filePath);
+    if (!f.open(QIODevice::ReadOnly)) {
+        qDebug() << "创建/更新后仍无法读取 json 文件：" << filePath << f.errorString();
+        return;
     }
 
     QByteArray bytes = f.readAll();
@@ -187,19 +209,27 @@ void EditorWindow::onUpdateClicked()
 
     QJsonObject obj = doc.object();
 
-    if (m_token.isEmpty()) {
-        qDebug() << "Token is empty, cannot update";
-        return;
-    }
-
-    // 这里直接复用 HttpManager 接口
+    // 3) 把最新结构上传给后端
     m_http->updateNoteStructure(m_token, obj);
 }
+
 
 // 拉取逻辑
 void EditorWindow::onSyncClicked()
 {
-    
+    // TODO: 弹出确认窗口
+    qDebug() << "尝试同步笔记";
+    if (m_token.isEmpty()) {
+        qDebug() << "Token is empty, cannot fetch note structure";
+        return;
+    }
+    if (!m_config) {
+        qDebug() << "Config is null, cannot fetch note structure";
+        return;
+    }
+
+    m_http->fetchNoteStructure(m_token);
+    qDebug() << "fetch调用成功";
 }
 
 void EditorWindow::onLogoutResult(bool ok, const QString& message)
@@ -216,11 +246,111 @@ void EditorWindow::onLogoutResult(bool ok, const QString& message)
     emit logoutSucceeded();
 }
 
+void EditorWindow::onUpdateResult(bool ok, const QString& message)
+{
+    if (!ok) {
+        QMessageBox::warning(this, "更新失败", message);
+        return;
+    }
+    QMessageBox::information(this, "更新成功", message);
+}
+
+void EditorWindow::onFetchResult(bool ok, const QString& message, const QJsonObject& noteStruct)
+{
+    qDebug() << "fetch note structure result:" << ok << message;
+
+    if (!ok) {
+        // 这里可以弹个对话框或状态栏提示
+        // showMessage(message);
+        return;
+    }
+
+    if (!m_config) {
+        qDebug() << "Config is null in onFetchResult";
+        return;
+    }
+
+    const QString rootDir = m_config->projectRoot();
+    if (rootDir.isEmpty()) {
+        qDebug() << "projectRoot is empty in onFetchResult";
+        return;
+    }
+
+    const QString filePath = rootDir + "/.Note/note_structure.json";
+
+    // 确保目录存在
+    QFileInfo info(filePath);
+    QDir dir = info.dir();
+    if (!dir.exists()) {
+        if (!dir.mkpath(".")) {
+            qDebug() << "Failed to create dir for note_structure.json:"
+                << dir.absolutePath();
+            return;
+        }
+    }
+
+    // 把后端返回的结构写入本地 json 文件
+    QJsonDocument doc(noteStruct);
+    QFile f(filePath);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        qDebug() << "Failed to open note_structure.json for write:"
+            << filePath << f.errorString();
+        return;
+    }
+    f.write(doc.toJson(QJsonDocument::Indented));
+    f.close();
+
+    // 刷新左侧树 + 编辑区
+    updateNoteTree(filePath, rootDir);
+}
+
 void EditorWindow::onNetworkError(const QString& error)
 {
     ui->logoutButton->setEnabled(true);
     QMessageBox::warning(this, "Network error", error);
 }
+
+// 新建树
+void EditorWindow::initNoteTree(const QString& jsonFilePath,
+    const QString& rootDirPath)
+{
+    int nextId = 1;
+
+    // 用 JSON + 目录生成最新的树结构（会扫描文件夹）
+    m_rootNode = m_structureMgr->updateStructureFromDirAndJson(
+        jsonFilePath,
+        rootDirPath,
+        nextId
+    );
+
+    // 把合并后的树结构写回 jsonFilePath
+    m_structureMgr->saveToJsonFile(jsonFilePath, m_rootNode.get());
+
+    if (!m_rootNode) {
+        qDebug() << "initNoteTree: failed to build note structure tree.";
+
+        if (m_treeModel) {
+            delete m_treeModel;
+            m_treeModel = nullptr;
+        }
+        m_treeModel = new QStandardItemModel(ui->treeView);
+        m_treeModel->setHorizontalHeaderLabels({ "Name" });
+        ui->treeView->setModel(m_treeModel);
+        return;
+    }
+
+    // 重建 model
+    if (m_treeModel) {
+        delete m_treeModel;
+        m_treeModel = nullptr;
+    }
+    m_treeModel = m_structureMgr->createTreeModel(m_rootNode.get(), ui->treeView);
+    ui->treeView->setModel(m_treeModel);
+
+    ui->treeView->expandToDepth(0);
+    ui->treeView->header()->setStretchLastSection(true);
+}
+
 
 /**
  * @brief 根据Json文件和目录更新Treeview
@@ -232,18 +362,11 @@ void EditorWindow::updateNoteTree(const QString& jsonFilePath,
 {
     int nextId = 1;
 
-    // 用 JSON + 目录生成最新的树结构
-    m_rootNode = m_structureMgr->updateStructureFromDirAndJson(
-        jsonFilePath,
-        rootDirPath,
-        nextId
-    );
-
-    m_structureMgr->saveToJsonFile(jsonFilePath, m_rootNode.get());
-
+    // 只从 json 文件加载树结构，不扫描目录
+    m_rootNode = m_structureMgr->loadFromJsonFile(jsonFilePath, nextId);
     if (!m_rootNode) {
-        qDebug() << "updateNoteTree: failed to build note structure tree.";
-        // 空 model
+        qDebug() << "updateNoteTree: failed to load note structure tree from json.";
+
         if (m_treeModel) {
             delete m_treeModel;
             m_treeModel = nullptr;
@@ -254,7 +377,6 @@ void EditorWindow::updateNoteTree(const QString& jsonFilePath,
         return;
     }
 
-    // 用 NoteStructureManager 内部的 createTreeModel 构建 model
     if (m_treeModel) {
         delete m_treeModel;
         m_treeModel = nullptr;
@@ -262,7 +384,6 @@ void EditorWindow::updateNoteTree(const QString& jsonFilePath,
     m_treeModel = m_structureMgr->createTreeModel(m_rootNode.get(), ui->treeView);
     ui->treeView->setModel(m_treeModel);
 
-    // 展开顶层，最后一列自适应
     ui->treeView->expandToDepth(0);
     ui->treeView->header()->setStretchLastSection(true);
 }
