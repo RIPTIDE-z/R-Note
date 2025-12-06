@@ -16,6 +16,10 @@ public:
     void registerUser(const QString& username, const QString& password);
     void login(const QString& username, const QString& password);
     void logout(const QString& token);
+    // 笔记结构相关
+    void fetchNoteStructure(const QString& token);                 
+    void updateNoteStructure(const QString& token,
+        const QJsonObject& noteStruct);       
 
     void setBaseUrl(const QString& url);
 
@@ -29,6 +33,11 @@ signals:
         const QJsonObject& noteStructure);
     // 退出登录结果
     void logoutResult(bool ok, const QString& message);
+    // 获取笔记结构
+    void noteStructureFetched(bool ok, const QString& msg,
+        const QJsonObject& noteStruct);
+    // 笔记结构更新
+    void noteStructureUpdated(bool ok, const QString& msg);
     // 通用网络错误
     void networkError(const QString& error);
 
@@ -42,6 +51,8 @@ private:
     void handleLoginResponse(const QJsonObject& obj);
     void handleRegisterResponse(const QJsonObject& obj);
     void handleLogoutResponse(const QJsonObject& obj);
+    void handleFetchNoteStructureResponse(const QJsonObject& obj);
+    void handleUpdateNoteStructureResponse(const QJsonObject& obj);
 
     void saveNoteStructureToFile(const QJsonObject& noteStruct);
 };
