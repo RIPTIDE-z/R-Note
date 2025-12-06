@@ -1,7 +1,10 @@
 target_sources(${PROJECT_NAME}
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/loginwindow.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/registerwindow.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/login_window.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/login_window.ui
+        ${CMAKE_CURRENT_SOURCE_DIR}/register_window.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/register_window.ui
+        ${CMAKE_CURRENT_SOURCE_DIR}/config_dialog.cpp
 )
 target_include_directories(${PROJECT_NAME}
     PRIVATE

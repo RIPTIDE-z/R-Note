@@ -1,8 +1,8 @@
 #include "httpmanager.h"
+#include "hash_processor.h"
 
 #include <QNetworkRequest>
 #include <QJsonDocument>
-#include <QFile>
 #include <QStandardPaths>
 #include <QDir>
 
@@ -14,6 +14,11 @@ HttpManager::HttpManager(QObject* parent)
         this, &HttpManager::onReplyFinished);
 }
 
+void HttpManager::setBaseUrl(const QString& url)
+{
+    m_baseUrl = url;
+}
+
 // POST /auth/register
 void HttpManager::registerUser(const QString& username, const QString& password)
 {
@@ -21,9 +26,12 @@ void HttpManager::registerUser(const QString& username, const QString& password)
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
+    
+
     QJsonObject body;
     body["username"] = username;
-    body["passwordHash"] = password;
+    // 密码进行sha256加密
+    body["passwordHash"] = HashEncrypt(password);
 
     QNetworkReply* reply =
         m_manager.post(request, QJsonDocument(body).toJson());
@@ -39,7 +47,7 @@ void HttpManager::login(const QString& username, const QString& password)
 
     QJsonObject body;
     body["username"] = username;
-    body["passwordHash"] = password;
+    body["passwordHash"] = HashEncrypt(password);
 
     QNetworkReply* reply =
         m_manager.post(request, QJsonDocument(body).toJson());
@@ -56,6 +64,31 @@ void HttpManager::logout(const QString& token)
 
     QNetworkReply* reply = m_manager.post(request, QByteArray());
     reply->setProperty("requestType", "logout");
+}
+
+// GET /note-structure
+void HttpManager::fetchNoteStructure(const QString& token)
+{
+    QUrl url(m_baseUrl + "/note-structure");
+    QNetworkRequest request(url);
+    request.setRawHeader("Auth-Token", token.toUtf8());
+
+    QNetworkReply* reply = m_manager.get(request);
+    reply->setProperty("requestType", "fetchNoteStructure");
+}
+
+// PUT /note-structure
+void HttpManager::updateNoteStructure(const QString& token,
+    const QJsonObject& noteStruct)
+{
+    QUrl url(m_baseUrl + "/note-structure");
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Auth-Token", token.toUtf8());
+
+    QJsonDocument doc(noteStruct);
+    QNetworkReply* reply = m_manager.put(request, doc.toJson());
+    reply->setProperty("requestType", "updateNoteStructure");
 }
 
 void HttpManager::onReplyFinished(QNetworkReply* reply)
@@ -86,6 +119,12 @@ void HttpManager::onReplyFinished(QNetworkReply* reply)
     }
     else if (reqType == "logout") {
         handleLogoutResponse(obj);
+    }
+    else if (reqType == "fetchNoteStructure") {
+        handleFetchNoteStructureResponse(obj);
+    }
+    else if (reqType == "updateNoteStructure") {
+        handleUpdateNoteStructureResponse(obj);
     }
 
     reply->deleteLater();
@@ -144,3 +183,44 @@ void HttpManager::saveNoteStructureToFile(const QJsonObject& noteStruct)
     file.write(doc.toJson(QJsonDocument::Indented));
     file.close();
 }
+
+void HttpManager::handleFetchNoteStructureResponse(const QJsonObject& obj)
+{
+    const int code = obj.value("code").toInt(1);
+    const QString msg = obj.value("message").toString();
+
+    if (code != 0) {
+        emit noteStructureFetched(false, msg, QJsonObject());
+        return;
+    }
+
+    const QString structureStr = obj.value("structure").toString();
+    QJsonObject structureObj;
+
+    if (!structureStr.isEmpty()) {
+        QJsonParseError err;
+        QJsonDocument structDoc = QJsonDocument::fromJson(structureStr.toUtf8(), &err);
+        if (err.error != QJsonParseError::NoError || !structDoc.isObject()) {
+            emit noteStructureFetched(false,
+                QStringLiteral("服务端返回的 structure 不是合法 JSON: %1")
+                .arg(err.errorString()),
+                QJsonObject());
+            return;
+        }
+        structureObj = structDoc.object();
+
+        // 可选：同步保存到本地文件
+        saveNoteStructureToFile(structureObj);
+    }
+
+    emit noteStructureFetched(true, msg, structureObj);
+}
+
+void HttpManager::handleUpdateNoteStructureResponse(const QJsonObject& obj)
+{
+    const int code = obj.value("code").toInt(1);
+    const QString msg = obj.value("message").toString();
+
+    emit noteStructureUpdated(code == 0, msg);
+}
+

@@ -7,5 +7,6 @@ Note_back/target/
 
 Note_front/.vs/
 Note_front/out/
+Note_front/Folder.DotSettings.user
 
 Note_back/src/main/resources/config/db_credential.yml
