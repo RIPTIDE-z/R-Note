@@ -10,7 +10,7 @@
 #include "title_bar.h"
 
 
-MainWindow::MainWindow(HttpManager* http, QWidget* parent)
+MainWindow::MainWindow(AppConfig* config, HttpManager* http, NoteStructureManager* noteMgr, QWidget* parent)
     : QMainWindow(parent),
       stacked_(new QStackedWidget(this))
 {
@@ -27,8 +27,8 @@ MainWindow::MainWindow(HttpManager* http, QWidget* parent)
         "QLabel.link { color: #a26bff; }"
     );
 
-    loginPage_ = new LoginWindow(http);
-    regPage_ = new RegisterWindow(http);
+    loginPage_ = new LoginWindow(http, config);
+    regPage_ = new RegisterWindow(http, config);
     editorPage_ = new EditorWindow(http);
 
     stacked_ = new QStackedWidget(this);

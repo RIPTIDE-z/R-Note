@@ -2,6 +2,9 @@
 
 #include <QFile>
 #include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QJsonParseError>
 #include <QDirIterator>
 #include <QStandardItem>
 

@@ -3,6 +3,7 @@
 
 #include "httpmanager.h"
 #include "config_dialog.h"
+#include "app_config.h"
 
 #include <QEvent>
 #include <QLineEdit>
@@ -10,10 +11,13 @@
 #include <QLabel>
 #include <QWidget>
 
-RegisterWindow::RegisterWindow(HttpManager* http, QWidget* parent)
+RegisterWindow::RegisterWindow(HttpManager* http,
+    AppConfig* config,
+    QWidget* parent)
     : QWidget(parent)
     , ui(new Ui::RegisterWindow)
     , m_http(http)
+    , m_config(config)
 {
     ui->setupUi(this);
 
@@ -22,8 +26,6 @@ RegisterWindow::RegisterWindow(HttpManager* http, QWidget* parent)
 
     // 手动设置动态属性 class="link"
     ui->signInLabel->setProperty("class", "link");
-
-    // “登录”标签安装事件过滤器
     ui->signInLabel->installEventFilter(this);
 
     // 信号槽
@@ -35,9 +37,6 @@ RegisterWindow::RegisterWindow(HttpManager* http, QWidget* parent)
         this, &RegisterWindow::onNetworkError);
     connect(ui->configButton, &QPushButton::clicked,
         this, &RegisterWindow::onConfigButtonClicked);
-
-    m_baseUrl.clear();
-    m_projectRoot.clear();
 }
 
 RegisterWindow::~RegisterWindow()
@@ -66,23 +65,21 @@ void RegisterWindow::onRegisterClicked()
         return;
     }
 
-    // 这里强制要求配置先完成
-    if (m_baseUrl.isEmpty() || m_projectRoot.isEmpty()) {
-        ui->messageLabel->setText(QStringLiteral("请先点击“配置…”设置 Base URL 和 Project Root"));
+    // 强制要求先配置好 Base URL 和 Project Root
+    if (!m_config ||
+        m_config->baseUrl().isEmpty() ||
+        m_config->projectRoot().isEmpty()) {
+        ui->messageLabel->setText(
+            QStringLiteral("请先点击“配置…”设置 Base URL 和 Project Root"));
         return;
     }
 
     ui->messageLabel->clear();
     ui->registerButton->setEnabled(false);
 
-    // 把 baseUrl 应用到 HttpManager
     if (m_http) {
-        // 这里假定你有 HttpManager::setBaseUrl(const QString &)
-        // 如果名字叫 setBaseUrl，自行改成 setBaseUrl
-        m_http->setBaseUrl(m_baseUrl);
+        m_http->registerUser(username, password);
     }
-
-    m_http->registerUser(username, password);
 }
 
 void RegisterWindow::onRegisterResult(bool ok, const QString& message)
@@ -101,7 +98,6 @@ void RegisterWindow::onNetworkError(const QString& error)
     ui->messageLabel->setText(error);
 }
 
-// ===== 配置按钮逻辑 =====
 void RegisterWindow::onConfigButtonClicked()
 {
     QWidget* win = window();   // 顶层窗口 MainWindow
@@ -109,12 +105,18 @@ void RegisterWindow::onConfigButtonClicked()
     // 半透明遮罩
     auto* overlay = new QWidget(win);
     overlay->setObjectName("ConfigOverlay");
-    overlay->setStyleSheet("#ConfigOverlay { background-color: rgba(0, 0, 0, 160); }");
+    overlay->setStyleSheet(
+        "#ConfigOverlay { background-color: rgba(0, 0, 0, 160); }");
     overlay->setGeometry(win->rect());
     overlay->show();
     overlay->raise();
 
-    ConfigDialog dlg(m_baseUrl, m_projectRoot, win);
+    const QString baseUrl =
+        m_config ? m_config->baseUrl() : QString();
+    const QString projectRoot =
+        m_config ? m_config->projectRoot() : QString();
+
+    ConfigDialog dlg(baseUrl, projectRoot, win);
     connect(&dlg, &ConfigDialog::configAccepted,
         this, &RegisterWindow::onConfigAccepted);
 
@@ -133,17 +135,13 @@ void RegisterWindow::onConfigButtonClicked()
 void RegisterWindow::onConfigAccepted(const QString& baseUrl,
     const QString& projectRoot)
 {
-    m_baseUrl = baseUrl;
-    m_projectRoot = projectRoot;
-
-    // 把 baseUrl 立刻应用到 HttpManager
-    if (m_http) {
-        m_http->setBaseUrl(baseUrl);
+    if (m_config) {
+        m_config->setBaseUrl(baseUrl);
+        m_config->setProjectRoot(projectRoot);
     }
 
     // 清掉之前的错误提示
     ui->messageLabel->clear();
 
-    // 往上层（MainWindow）广播一份，如果你后面要在 EditorWindow 那边用 projectRoot
     emit configChanged(baseUrl, projectRoot);
 }

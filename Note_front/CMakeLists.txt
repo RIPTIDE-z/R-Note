@@ -16,7 +16,7 @@ find_package(Qt6 REQUIRED COMPONENTS Gui Core Widgets Network)
 find_package(QWindowKit COMPONENTS Widgets REQUIRED)
 
 # 添加主程序
-add_subdirectory(NoteApp)
+add_subdirectory(src/NoteApp)
 
 # 添加子模块
 add_subdirectory(src/Auth)
@@ -26,3 +26,4 @@ add_subdirectory(src/MainWindow)
 add_subdirectory(src/Tools)
 add_subdirectory(src/Json)
 add_subdirectory(src/TitleBar)
+add_subdirectory(src/Config)

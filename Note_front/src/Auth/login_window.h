@@ -3,6 +3,7 @@
 
 #include <QWidget>
 
+class AppConfig;
 class HttpManager;
 class QJsonObject;
 class QEvent;
@@ -15,7 +16,9 @@ class LoginWindow : public QWidget
 {
     Q_OBJECT
 public:
-    explicit LoginWindow(HttpManager* http, QWidget* parent = nullptr);
+    explicit LoginWindow(HttpManager* http,
+        AppConfig* config,
+        QWidget* parent = nullptr);
     ~LoginWindow() override;
 
 protected:
@@ -36,6 +39,7 @@ private slots:
 private:
     Ui::LoginWindow* ui;
     HttpManager* m_http;
+    AppConfig* m_config;
 };
 
 #endif // LOGINWINDOW_H

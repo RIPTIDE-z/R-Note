@@ -9,10 +9,13 @@
 #include <QLineEdit>
 #include <QLabel>
 
-LoginWindow::LoginWindow(HttpManager* http, QWidget* parent)
+LoginWindow::LoginWindow(HttpManager* http,
+    AppConfig* config,
+    QWidget* parent)
     : QWidget(parent)
     , ui(new Ui::LoginWindow)
     , m_http(http)
+    , m_config(config)
 {
     ui->setupUi(this);
 
