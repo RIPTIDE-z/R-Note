@@ -14,7 +14,7 @@
 	  <string>Note Editor</string>
 	</property>
 	<widget class="QWidget" name="centralwidget">
-	  <!-- 外层垂直布局：上方是工具栏区域（大纲按钮），下方是左右分栏 -->
+	  <!-- 外层垂直布局：上方是左右分栏，底部是登出按钮条 -->
 	  <layout class="QVBoxLayout" name="centralLayout">
 		<property name="leftMargin">
 		  <number>16</number>
@@ -32,43 +32,14 @@
 		  <number>12</number>
 		</property>
 
-		<!-- 顶部工具栏：左上角大纲按钮 -->
-		<item>
-		  <layout class="QHBoxLayout" name="topBarLayout">
-			<property name="spacing">
-			  <number>8</number>
-			</property>
-			<item>
-			  <widget class="QPushButton" name="outlineButton">
-				<property name="text">
-				  <string>大纲</string>
-				</property>
-			  </widget>
-			</item>
-			<item>
-			  <spacer name="topBarSpacer">
-				<property name="orientation">
-				  <enum>Qt::Horizontal</enum>
-				</property>
-				<property name="sizeHint">
-				  <size>
-					<width>40</width>
-					<height>20</height>
-				  </size>
-				</property>
-			  </spacer>
-			</item>
-		  </layout>
-		</item>
-
-		<!-- 主内容区域：左侧大纲（leftPanel）+ 右侧编辑区域 -->
+		<!-- 主内容区域：左侧大纲（leftPanel）+ 右侧编辑区域（rightPanel） -->
 		<item>
 		  <layout class="QHBoxLayout" name="mainHLayout">
 			<property name="spacing">
 			  <number>12</number>
 			</property>
 
-			<!-- 左侧：大纲面板，作为一个 QWidget 容器，方便做宽度动画 -->
+			<!-- 左侧：大纲面板，作为一个 QWidget 容器，后续会被放进 QSplitter -->
 			<item>
 			  <widget class="QWidget" name="leftPanel">
 				<layout class="QVBoxLayout" name="leftLayout">
@@ -76,10 +47,9 @@
 					<number>8</number>
 				  </property>
 
-				  <!-- TreeView：注意去掉过大的 minimumWidth，避免阻止收起 -->
+				  <!-- TreeView -->
 				  <item>
 					<widget class="QTreeView" name="treeView">
-					  <!-- 可以不给 minimumWidth 或设为较小值，让 leftPanel 能收缩到 0 -->
 					  <property name="alternatingRowColors">
 						<bool>true</bool>
 					  </property>
@@ -111,32 +81,6 @@
 					  </property>
 					</widget>
 				  </item>
-
-				  <!-- 左侧底部：登出按钮条 -->
-				  <item>
-					<layout class="QHBoxLayout" name="leftBottomBar">
-					  <item>
-						<widget class="QPushButton" name="logoutButton">
-						  <property name="text">
-							<string>登出</string>
-						  </property>
-						</widget>
-					  </item>
-					  <item>
-						<spacer name="horizontalSpacerLogout">
-						  <property name="orientation">
-							<enum>Qt::Horizontal</enum>
-						  </property>
-						  <property name="sizeHint">
-							<size>
-							  <width>40</width>
-							  <height>20</height>
-							</size>
-						  </property>
-						</spacer>
-					  </item>
-					</layout>
-				  </item>
 				</layout>
 			  </widget>
 			</item>
@@ -165,6 +109,35 @@
 			  </widget>
 			</item>
 
+		  </layout>
+		</item>
+
+		<!-- 底部：登出按钮条（横跨 TreeView + 编辑区） -->
+		<item>
+		  <layout class="QHBoxLayout" name="bottomBarLayout">
+			<property name="spacing">
+			  <number>8</number>
+			</property>
+			<item>
+			  <widget class="QPushButton" name="logoutButton">
+				<property name="text">
+				  <string>登出</string>
+				</property>
+			  </widget>
+			</item>
+			<item>
+			  <spacer name="bottomSpacer">
+				<property name="orientation">
+				  <enum>Qt::Horizontal</enum>
+				</property>
+				<property name="sizeHint">
+				  <size>
+					<width>40</width>
+					<height>20</height>
+				  </size>
+				</property>
+			  </spacer>
+			</item>
 		  </layout>
 		</item>
 

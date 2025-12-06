@@ -11,9 +11,8 @@
 #include <QDebug>
 #include <QStandardItemModel>
 #include <QAbstractItemView>
-#include <QHBoxLayout>
-#include <QPropertyAnimation>
-#include <QEasingCurve>
+#include <QSplitter>
+#include <QList>
 
 EditorWindow::EditorWindow(HttpManager* http, QWidget* parent)
     : QMainWindow(parent)
@@ -23,39 +22,74 @@ EditorWindow::EditorWindow(HttpManager* http, QWidget* parent)
 {
     ui->setupUi(this);
 
-    QFont f = ui->treeView->font();
-    f.setPointSize(14);                // 字号
-    // 或者 f.setPixelSize(14);
-    f.setFamily("JetBrain Mono");    // 字体家族，可选
-    // f.setBold(true);               // 加粗，可选
-    ui->treeView->setFont(f);
+    // ========= 1. TreeView 外观与行为设置 =========
+    {
+        QFont f = ui->treeView->font();
+        f.setPointSize(14);                    // 字号
+        f.setFamily("JetBrains Mono");         // 字体名
+        // f.setBold(true);                    // 如需加粗可打开
+        ui->treeView->setFont(f);
 
+        ui->treeView->setExpandsOnDoubleClick(true);
+        ui->treeView->setUniformRowHeights(true);
+        ui->treeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
-    // 某些行为属性在代码里设置更直观
-    ui->treeView->setExpandsOnDoubleClick(true);
-    ui->treeView->setUniformRowHeights(true);
-    ui->treeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    // 关闭水平滚动条（例如你不想在动画时看到它闪出来）
-    ui->treeView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        // 关闭水平滚动条，避免被压窄时横向滚动条闪一下
+        ui->treeView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    }
 
-    // 手动设置左右宽度比例：左 1，右 3
-    // mainHLayout 是在 .ui 里命名的 QHBoxLayout
-    ui->mainHLayout->setStretch(0, 1);  // 左列（大纲面板）
-    ui->mainHLayout->setStretch(1, 3);  // 右列（编辑区域）
+    // ========= 2. 用 QSplitter 管左右两块 =========
+    // .ui 中 centralLayout 下有：
+    //  - mainHLayout（里面是 leftPanel / rightPanel）
+    //  - bottomBarLayout（里面是 logoutButton）
+    //
+    // 这里把 leftPanel / rightPanel 从 mainHLayout 移出，
+    // 放进一个水平 QSplitter，实现中间拖动分栏。
 
-    // ====== 新增：初始化大纲面板动画 ======
-    // leftPanel 是 .ui 中包裹 TreeView + 登出按钮的 QWidget 容器
-    // 通过动画它的 maximumWidth，在 0 和 m_outlineTargetWidth 之间插值 ->
-    // 左侧大纲平滑伸缩，右侧编辑区域跟着自适应缩放
-    ui->leftPanel->setMinimumWidth(0);                // 允许完全收起
-    ui->leftPanel->setMaximumWidth(m_outlineTargetWidth);  // 默认展开状态的最大宽度
-    m_outlineVisible = true;                          // 启动时默认显示大纲
+    QWidget* leftPanel = ui->leftPanel;
+    QWidget* rightPanel = ui->rightPanel;
 
-    m_outlineAnim = new QPropertyAnimation(ui->leftPanel, "maximumWidth", this);
-    m_outlineAnim->setDuration(220);                 // 动画时长（毫秒）
-    m_outlineAnim->setEasingCurve(QEasingCurve::OutCubic); // 缓动曲线，使动画更自然
+    // 从原来的 mainHLayout 中移除
+    ui->mainHLayout->removeWidget(leftPanel);
+    ui->mainHLayout->removeWidget(rightPanel);
 
-    // 信号连接
+    // 创建水平 splitter，作为 mainHLayout 唯一的子 widget
+    m_splitter = new QSplitter(Qt::Horizontal, ui->centralwidget);
+    m_splitter->setObjectName("editorSplitter");
+    m_splitter->setHandleWidth(4);              // 分割条宽度
+
+    // 分割条样式（可按需调整）
+    m_splitter->setStyleSheet(
+        "QSplitter::handle:horizontal {"
+        "    background: #444444;"
+        "}"
+        "QSplitter::handle:horizontal:hover {"
+        "    background: #888888;"
+        "}"
+    );
+
+    // 把左右 panel 放进 splitter
+    m_splitter->addWidget(leftPanel);
+    m_splitter->addWidget(rightPanel);
+
+    // 初始大小：近似 1:3
+    {
+        QList<int> sizes;
+        sizes << 260 << 740;  // 左：大纲，右：编辑区
+        m_splitter->setSizes(sizes);
+    }
+
+    // 清空 mainHLayout 里原有 item，只放一个 splitter
+    while (ui->mainHLayout->count() > 0) {
+        QLayoutItem* item = ui->mainHLayout->takeAt(0);
+        if (!item->widget()) {
+            delete item;
+        }
+    }
+    ui->mainHLayout->addWidget(m_splitter);
+    // 以后左右比例完全由 splitter 管理，不再使用 setStretch
+
+    // ========= 3. 信号连接 =========
     connect(ui->logoutButton, &QPushButton::clicked,
         this, &EditorWindow::onLogoutClicked);
 
@@ -66,10 +100,6 @@ EditorWindow::EditorWindow(HttpManager* http, QWidget* parent)
 
     connect(ui->treeView, &QTreeView::doubleClicked,
         this, &EditorWindow::onTreeItemDoubleClicked);
-
-    // ====== 新增：连接“大纲”按钮点击信号 ======
-    connect(ui->outlineButton, &QPushButton::clicked,
-        this, &EditorWindow::onOutlineButtonClicked);
 }
 
 EditorWindow::~EditorWindow()
@@ -85,12 +115,13 @@ void EditorWindow::setToken(const QString& token)
 void EditorWindow::onLogoutClicked()
 {
     if (m_token.isEmpty()) {
-        // 保险起见
+        // 保险起见，没 token 直接认为已登出
         emit logoutSucceeded();
         return;
     }
 
-    auto ret = QMessageBox::question(this,
+    auto ret = QMessageBox::question(
+        this,
         "Confirm logout",
         "确定要登出账号吗?");
     if (ret != QMessageBox::Yes) {
@@ -125,6 +156,7 @@ void EditorWindow::initNoteTree(const QString& jsonFilePath,
     const QString& rootDirPath)
 {
     int nextId = 1;
+
     // 用 JSON + 目录生成最新的树结构
     m_rootNode = m_structureMgr->updateStructureFromDirAndJson(
         jsonFilePath,
@@ -153,19 +185,20 @@ void EditorWindow::initNoteTree(const QString& jsonFilePath,
     m_treeModel = m_structureMgr->createTreeModel(m_rootNode.get(), ui->treeView);
     ui->treeView->setModel(m_treeModel);
 
-    // 可选：展开顶层
+    // 展开顶层，最后一列自适应
     ui->treeView->expandToDepth(0);
     ui->treeView->header()->setStretchLastSection(true);
 }
 
 void EditorWindow::onTreeItemDoubleClicked(const QModelIndex& index)
 {
-    if (!index.isValid() || !m_treeModel) return;
+    if (!index.isValid() || !m_treeModel)
+        return;
 
     // 取出 type
     QString type = index.data(Qt::UserRole + 2).toString();
     if (type != "note") {
-        // 如果是 folder，双击就展开/收起即可，不做打开
+        // folder：双击只做展开/收起，不打开编辑
         return;
     }
 
@@ -180,7 +213,8 @@ void EditorWindow::onTreeItemDoubleClicked(const QModelIndex& index)
         << ", remoteId =" << remoteId
         << ", fullPath =" << fullPath;
 
-    QMessageBox::information(this,
+    QMessageBox::information(
+        this,
         "Open note",
         QString("id = %1\nremoteId = %2\nfullPath = %3")
         .arg(id)
@@ -188,36 +222,4 @@ void EditorWindow::onTreeItemDoubleClicked(const QModelIndex& index)
         .arg(fullPath));
 
     // TODO: 在这里接你后面的编辑器逻辑
-}
-
-// ====== 新增：大纲显示/隐藏的动画切换逻辑 ======
-void EditorWindow::onOutlineButtonClicked()
-{
-    if (!m_outlineAnim)
-        return;
-
-    // 如果动画正在进行，先停掉，避免用户连点导致状态错乱
-    if (m_outlineAnim->state() == QAbstractAnimation::Running) {
-        m_outlineAnim->stop();
-    }
-
-    // 当前的最大宽度作为动画起点
-    int startWidth = ui->leftPanel->maximumWidth();
-    int endWidth = 0;
-
-    if (!m_outlineVisible) {
-        // 当前是隐藏状态 -> 目标是展开
-        endWidth = m_outlineTargetWidth;
-    }
-    else {
-        // 当前是展开状态 -> 目标是收起（宽度为 0）
-        endWidth = 0;
-    }
-
-    m_outlineAnim->setStartValue(startWidth);
-    m_outlineAnim->setEndValue(endWidth);
-    m_outlineAnim->start();
-
-    // 记录当前可见状态
-    m_outlineVisible = !m_outlineVisible;
 }
