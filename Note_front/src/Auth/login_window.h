@@ -28,6 +28,9 @@ signals:
     void loginSucceeded(const QString& token, const QJsonObject& noteStructure);
     void requestShowRegister();
 
+    void configChanged(const QString& baseUrl,
+        const QString& projectRoot);
+
 private slots:
     void onLoginClicked();
     void onLoginResult(bool ok,
@@ -35,6 +38,13 @@ private slots:
         const QString& token,
         const QJsonObject& noteStructure);
     void onNetworkError(const QString& error);
+
+    // “配置…”按钮
+    void onConfigButtonClicked();
+
+    // ConfigDialog 返回成功时
+    void onConfigAccepted(const QString& baseUrl,
+        const QString& projectRoot);
 
 private:
     Ui::LoginWindow* ui;
