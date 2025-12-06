@@ -25,7 +25,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public User register(String username, String passwordHash) {
         log.info("尝试注册用户...");
-        if (userMapper.findHashByUsername(username) != null) {
+        if (userMapper.getHashByUsername(username) != null) {
             log.warn("用户名已存在，注册失败");
             throw new ExceptionWithMessage("用户名已存在");
         }
@@ -43,7 +43,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public User login(String username, String passwordHash) {
         log.info("尝试登录用户{}", username);
-        User user = userMapper.findHashByUsername(username);
+        User user = userMapper.getHashByUsername(username);
         if (user == null || !passwordHash.equals(user.getPasswordHash())) {
             log.warn("登录失败，{}不存在", username);
             throw new ExceptionWithMessage("用户名或密码错误");
@@ -60,19 +60,23 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String getNoteStructure(Long userId) {
-        User user = userMapper.findById(userId);
+        log.info("尝试获取用户{}的笔记结构", userId);
+        User user = userMapper.getNoteStructureByUserId(userId);
         if (user == null) {
-            throw new RuntimeException("用户不存在");
+            throw new ExceptionWithMessage("用户不存在");
         }
+        log.info("成功获取用户{}的笔记结构", userId);
         return user.getNoteStructure();
     }
 
     @Override
     public void updateNoteStructure(Long userId, String noteStructureJson) {
+        log.info("尝试更新用户{}的笔记结构", userId);
         int n = userMapper.updateNoteStructure(userId, noteStructureJson);
         if (n == 0) {
-            throw new RuntimeException("更新笔记结构失败");
+            throw new ExceptionWithMessage("更新笔记结构失败");
         }
+        log.info("已成功更新用户{}的笔记结构", userId);
     }
 
     @Override

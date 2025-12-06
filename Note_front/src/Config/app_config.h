@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QString>
 
+class HttpManager;
 /**
  * 运行时配置类，统一保存：
  * - baseUrl：HTTP API 根地址，例如 http://127.0.0.1:8080/api

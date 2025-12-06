@@ -152,8 +152,19 @@ QJsonObject NoteStructureManager::toJson(const NoteNode* node) const
 void NoteStructureManager::saveToJsonFile(const QString& filePath, const NoteNode* root)
 {
     if (!root) {
-        qDebug() << "saveToJsonFile: root is null, skip.";
+        qDebug() << "saveToJsonFile: rootnode is null, skip.";
         return;
+    }
+
+    // 确保目录存在：若不存在则创建
+    QFileInfo info(filePath);
+    QDir dir = info.dir();
+    if (!dir.exists()) {
+        if (!dir.mkpath(".")) {
+            qDebug() << "Failed to create dir for:" << filePath
+                << ", error when making path.";
+            return;
+        }
     }
 
     // 先将树解析为QJSON对象

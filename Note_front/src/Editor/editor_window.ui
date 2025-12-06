@@ -114,31 +114,50 @@
 
 		<!-- 底部：登出按钮条（横跨 TreeView + 编辑区） -->
 		<item>
-		  <layout class="QHBoxLayout" name="bottomBarLayout">
-			<property name="spacing">
-			  <number>8</number>
-			</property>
-			<item>
-			  <widget class="QPushButton" name="logoutButton">
-				<property name="text">
-				  <string>登出</string>
+			<layout class="QHBoxLayout" name="bottomBarLayout">
+				<property name="spacing">
+					<number>8</number>
 				</property>
-			  </widget>
-			</item>
-			<item>
-			  <spacer name="bottomSpacer">
-				<property name="orientation">
-				  <enum>Qt::Horizontal</enum>
-				</property>
-				<property name="sizeHint">
-				  <size>
-					<width>40</width>
-					<height>20</height>
-				  </size>
-				</property>
-			  </spacer>
-			</item>
-		  </layout>
+
+				<item>
+					<widget class="QPushButton" name="logoutButton">
+						<property name="text">
+							<string>登出</string>
+						</property>
+					</widget>
+				</item>
+
+				<item>
+					<widget class="QPushButton" name="updateButton">
+						<property name="text">
+							<string>更新笔记</string>
+						</property>
+					</widget>
+				</item>
+
+				<item>
+					<widget class="QPushButton" name="syncButton">
+						<property name="text">
+							<string>拉取笔记</string>
+						</property>
+					</widget>
+				</item>
+
+				<item>
+					<spacer name="bottomSpacer">
+						<property name="orientation">
+							<enum>Qt::Horizontal</enum>
+						</property>
+						<property name="sizeHint">
+							<size>
+								<width>40</width>
+								<height>20</height>
+							</size>
+						</property>
+					</spacer>
+				</item>
+
+			</layout>
 		</item>
 
 	  </layout>

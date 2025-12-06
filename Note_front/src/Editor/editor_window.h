@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <memory>
 
+class AppConfig;
 class HttpManager;
 class QStandardItemModel;
 class NoteStructureManager;
@@ -26,29 +27,40 @@ class EditorWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    explicit EditorWindow(HttpManager* http, QWidget* parent = nullptr);
+    explicit EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent = nullptr);
     ~EditorWindow() override;
 
     void setToken(const QString& token);
 
-    // 初始化左侧 TreeView 的结构：传入 json 文件和根目录
+    // 读取文件夹结构新建json文件并初始化Treeview
     void initNoteTree(const QString& jsonFilePath, const QString& rootDirPath);
+    // 读取现有的json文件更新左侧 TreeView 
+    void updateNoteTree(const QString& jsonFilePath, const QString& rootDirPath);
 
 signals:
     // 通知主程序切回登录界面
     void logoutSucceeded();
 
 private slots:
+    // 按钮点击
     void onLogoutClicked();
-    void onLogoutResult(bool ok, const QString& message);
-    void onNetworkError(const QString& error);
+    void onUpdateClicked();
+    void onSyncClicked();
     void onTreeItemDoubleClicked(const QModelIndex& index);
+    
+    // 服务端响应
+    void onLogoutResult(bool ok, const QString& message);
+    void onUpdateResult(bool ok, const QString& message);
+    void onFetchResult(bool ok, const QString& message, const QJsonObject& noteStruct);
+    void onNetworkError(const QString& error);
+    
 
 private:
     Ui::EditorWindow* ui = nullptr;
 
     HttpManager* m_http = nullptr;
     QString m_token;
+    AppConfig* m_config;
 
     QStandardItemModel* m_treeModel = nullptr;
 

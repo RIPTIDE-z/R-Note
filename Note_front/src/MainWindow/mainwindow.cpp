@@ -3,10 +3,11 @@
 #include <QVBoxLayout>
 #include <QWKWidgets/widgetwindowagent.h>
 
+#include "app_config.h"
 #include "login_window.h"
 #include "register_window.h"
 #include "editor_window.h"
-#include "httpmanager.h"  
+#include "httpmanager.h"
 #include "title_bar.h"
 
 
@@ -14,7 +15,6 @@ MainWindow::MainWindow(AppConfig* config, HttpManager* http, NoteStructureManage
     : QMainWindow(parent),
       stacked_(new QStackedWidget(this))
 {
-
     setWindowTitle("");
     resize(500, 500);
     setStyleSheet(
@@ -29,7 +29,7 @@ MainWindow::MainWindow(AppConfig* config, HttpManager* http, NoteStructureManage
 
     loginPage_ = new LoginWindow(http, config);
     regPage_ = new RegisterWindow(http, config);
-    editorPage_ = new EditorWindow(http);
+    editorPage_ = new EditorWindow(http, config);
 
     stacked_ = new QStackedWidget(this);
     stacked_->addWidget(loginPage_);
@@ -71,24 +71,42 @@ MainWindow::MainWindow(AppConfig* config, HttpManager* http, NoteStructureManage
 
     // 信号连接：切换页面
     connect(loginPage_, &LoginWindow::requestShowRegister,
-        this, [this]() { stacked_->setCurrentWidget(regPage_); });
+            this, [this]() { stacked_->setCurrentWidget(regPage_); });
 
     connect(regPage_, &RegisterWindow::requestShowLogin,
-        this, [this]() { stacked_->setCurrentWidget(loginPage_); });
+            this, [this]() { stacked_->setCurrentWidget(loginPage_); });
 
     connect(loginPage_, &LoginWindow::loginSucceeded,
-        this, [&](const QString& token, const QJsonObject& noteStruct) {
-            editorPage_->setToken(token);
-            // 进入编辑器时放大一点
-            resizeKeepCenter(this, 1440, 900);
-            stacked_->setCurrentWidget(editorPage_); 
-        });
+            this, [&](const QString& token, const QJsonObject& noteStruct)
+            {
+                editorPage_->setToken(token);
+                // 进入编辑器时放大一点
+                resizeKeepCenter(this, 1440, 900);
+                stacked_->setCurrentWidget(editorPage_);
+            });
 
     connect(editorPage_, &EditorWindow::logoutSucceeded,
-        this, [this]() {
-            // 回到登录界面时缩回去
-            resizeKeepCenter(this, 500, 500);
-            stacked_->setCurrentWidget(loginPage_);
+            this, [this]()
+            {
+                // 回到登录界面时缩回去
+                resizeKeepCenter(this, 500, 500);
+                stacked_->setCurrentWidget(loginPage_);
+            });
+
+    connect(config, &AppConfig::projectRootChanged,
+        this,
+        [this](const QString& projectRoot)
+        {
+            editorPage_->initNoteTree(
+                projectRoot + "/.Note/note_structure.json",
+                projectRoot
+            );
+        });
+
+    connect(config, &AppConfig::baseUrlChanged,
+        this, [this, http](const QString& url)
+        {
+            http->setBaseUrl(url);
         });
 
 }

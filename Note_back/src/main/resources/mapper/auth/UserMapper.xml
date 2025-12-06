@@ -18,14 +18,31 @@
         <result property="passwordHash" column="password_hash"/>
     </resultMap>
 
+    <!-- 用于查询笔记结构 -->
+    <resultMap id="UserNoteStructureResultMap" type="com.riptidez.notebackend.auth.entity.User">
+        <id     property="id"            column="id"/>
+        <result property="noteStructure" column="note_structure"/>
+    </resultMap>
+
     <!-- 根据用户名查询用户密码 -->
-    <select id="findHashByUsername"
+    <select id="getHashByUsername"
             parameterType="java.lang.String"
             resultMap="UserHashResultMap">
         SELECT id,
                password_hash
         FROM user
         WHERE username = #{username}
+        LIMIT 1
+    </select>
+
+    <!-- 根据用户id查询用户笔记结构 -->
+    <select id="getNoteStructureByUserId"
+            parameterType="java.lang.Long"
+            resultMap="UserNoteStructureResultMap">
+        SELECT id,
+               note_structure
+        FROM user
+        WHERE id = #{id}
         LIMIT 1
     </select>
 

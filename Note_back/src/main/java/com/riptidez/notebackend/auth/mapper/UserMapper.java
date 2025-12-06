@@ -6,7 +6,8 @@ import org.apache.ibatis.annotations.Param;
 
 @Mapper
 public interface UserMapper {
-    User findHashByUsername(@Param("username") String username);
+    User getHashByUsername(@Param("username") String username);
+    User getNoteStructureByUserId(@Param("id") Long id);
 
     User findById(@Param("id") Long id);
 

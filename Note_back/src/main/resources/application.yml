@@ -82,5 +82,5 @@ logging:
 
 # MyBatis 配置 ，使用mybatis-config.xml进一步配置
 mybatis:
-  config-location: classpath:mybatis-config.xml
+  config-location: classpath:config/mybatis-config.xml
   mapper-locations: classpath*:mapper/**/*.xml

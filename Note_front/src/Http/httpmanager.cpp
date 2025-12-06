@@ -8,7 +8,7 @@
 
 HttpManager::HttpManager(QObject* parent)
     : QObject(parent)
-    , m_baseUrl("http://localhost:8080/api")   // 可以被 Config 覆盖
+    , m_baseUrl("http://127.0.0.1:8080/api")   // 可以被 Config 覆盖
 {
     connect(&m_manager, &QNetworkAccessManager::finished,
         this, &HttpManager::onReplyFinished);
@@ -73,11 +73,14 @@ void HttpManager::logout(const QString& token)
 void HttpManager::fetchNoteStructure(const QString& token)
 {
     QUrl url(m_baseUrl + "/note-structure");
+
     QNetworkRequest request(url);
     request.setRawHeader("Auth-Token", token.toUtf8());
 
     QNetworkReply* reply = m_manager.get(request);
+    qDebug() << "已发送请求" << request.url();
     reply->setProperty("requestType", "fetchNoteStructure");
+
 }
 
 // PUT /note-structure
@@ -85,14 +88,25 @@ void HttpManager::updateNoteStructure(const QString& token,
     const QJsonObject& noteStruct)
 {
     QUrl url(m_baseUrl + "/note-structure");
+    qDebug() << "[Http] updateNoteStructure() baseUrl =" << m_baseUrl
+        << ", url =" << url.toString()
+        << ", token =" << token;
+
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("Auth-Token", token.toUtf8());
 
     QJsonDocument doc(noteStruct);
-    QNetworkReply* reply = m_manager.put(request, doc.toJson());
+    QNetworkReply* reply = m_manager.put(request, doc.toJson(QJsonDocument::Compact));
     reply->setProperty("requestType", "updateNoteStructure");
+
+    connect(reply, &QNetworkReply::errorOccurred,
+        this, [url](QNetworkReply::NetworkError code) {
+            qDebug() << "[Http] updateNoteStructure error for" << url.toString()
+                << ", code =" << code;
+        });
 }
+
 
 void HttpManager::onReplyFinished(QNetworkReply* reply)
 {
@@ -104,7 +118,18 @@ void HttpManager::onReplyFinished(QNetworkReply* reply)
         return;
     }
 
+    int statusCode = reply->attribute(
+        QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    QVariant reason = reply->attribute(
+        QNetworkRequest::HttpReasonPhraseAttribute);
+
     const QByteArray data = reply->readAll();
+
+    qDebug() << "[HttpManager] reply finished, type =" << reqType
+        << ", error =" << reply->error()
+        << ", status =" << statusCode
+        << ", reason =" << reason.toString();
+
     QJsonParseError err;
     QJsonDocument doc = QJsonDocument::fromJson(data, &err);
     if (err.error != QJsonParseError::NoError || !doc.isObject()) {
@@ -113,6 +138,7 @@ void HttpManager::onReplyFinished(QNetworkReply* reply)
         reply->deleteLater();
         return;
     }
+
 
     QJsonObject obj = doc.object();
 
@@ -172,56 +198,64 @@ void HttpManager::handleLogoutResponse(const QJsonObject& obj)
 
 void HttpManager::handleFetchNoteStructureResponse(const QJsonObject& obj)
 {
-    const int code = obj.value("code").toInt(1);
-    const QString msg = obj.value("message").toString();
+    int code = obj.value("code").toInt(-1);
+    QString msg = obj.value("message").toString();
 
-    // 失败处理，返回空结构
-    if (code == 1) {
-        emit noteStructureFetched(false, msg, QJsonObject());
+    qDebug() << "正在处理返回的笔记结构";
+
+    if (code != 0) {
+        if (msg.isEmpty())
+            msg = QStringLiteral("获取笔记结构失败");
+        emit fetchNoteStructureResult(false, msg, QJsonObject{});
         return;
     }
 
     QJsonObject structureObj;
 
-    // 后端使用 @JsonRawValue String noteStructure;
-    // 返回的 noteStructure 在 JSON 里是一个嵌套对象
-    // 直接拿对象就行
-    const QJsonValue v = obj.value("noteStructure");
+    // 后端字段名是 structure
+    const QJsonValue v = obj.value("structure");
+    qDebug() << "已拿取到QJson值, type =" << v.type();
 
-    if (v.isObject()) {
-        // 标准情况：raw JSON 直接嵌套成对象
-        structureObj = v.toObject();
+    if (v.isString()) {
+        const QString structureStr = v.toString();
+        if (!structureStr.isEmpty()) {
+            QJsonParseError err;
+            QJsonDocument structDoc =
+                QJsonDocument::fromJson(structureStr.toUtf8(), &err);
+            if (err.error != QJsonParseError::NoError || !structDoc.isObject()) {
+                qDebug() << "解析 structure JSON 失败:" << err.errorString();
+                emit fetchNoteStructureResult(
+                    false,
+                    QStringLiteral("服务端返回的 structure 不是合法 JSON: %1")
+                    .arg(err.errorString()),
+                    QJsonObject{});
+                return;
+            }
+            structureObj = structDoc.object();
+            qDebug() << "已拿取到QJson对象";
+        }
     }
-    // else if (v.isString()) {
-    //     // 兼容一种情况：后端没加 @JsonRawValue，仍然是字符串，就走老逻辑
-    //     const QString structureStr = v.toString();
-    //     if (!structureStr.isEmpty()) {
-    //         QJsonParseError err;
-    //         QJsonDocument structDoc =
-    //             QJsonDocument::fromJson(structureStr.toUtf8(), &err);
-    //         if (err.error != QJsonParseError::NoError || !structDoc.isObject()) {
-    //             emit noteStructureFetched(
-    //                 false,
-    //                 QStringLiteral("服务端返回的 noteStructure 不是合法 JSON: %1")
-    //                 .arg(err.errorString()),
-    //                 QJsonObject());
-    //             return;
-    //         }
-    //         structureObj = structDoc.object();
-    //     }
-    // }
-    else if (!v.isUndefined() && !v.isNull()) {
-        // 字段存在但既不是 object 也不是 string，类型不对
-        emit noteStructureFetched(
+    else if (v.isObject()) {
+        // 如果以后你又加回 @JsonRawValue 变成嵌套对象，这里也兼容
+        structureObj = v.toObject();
+        qDebug() << "已拿取到QJson对象(嵌套 object)";
+    }
+    else if (!v.isNull() && !v.isUndefined()) {
+        qDebug() << "处理出现错误: structure 类型不正确, type =" << v.type();
+        emit fetchNoteStructureResult(
             false,
-            QStringLiteral("服务端返回的 noteStructure 类型不正确"),
-            QJsonObject());
+            QStringLiteral("服务端返回的 structure 类型不正确"),
+            QJsonObject{});
         return;
     }
 
-    // 不写本地文件，直接把 JSON 抛给上层，由 note_structure_manager 处理
-    emit noteStructureFetched(true, msg, structureObj);
+    if (msg.isEmpty())
+        msg = QStringLiteral("成功获取笔记结构");
+
+    // 成功时一定要 emit，把结构抛给上层（EditorWindow::onFetchResult）
+    emit fetchNoteStructureResult(true, msg, structureObj);
 }
+
 
 void HttpManager::handleUpdateNoteStructureResponse(const QJsonObject& obj)
 {
