@@ -2,6 +2,7 @@
 #pragma once
 
 #include <QWidget>
+#include <QToolButton>
 
 class QLabel;
 class QToolButton;
@@ -12,6 +13,11 @@ class CustomTitleBar : public QWidget
 public:
     // window 是被控制的顶层窗口（QMainWindow / QWidget 都行）
     explicit CustomTitleBar(QWidget* window, QWidget* parent = nullptr);
+
+    // 暴露给 QWindowKit 用
+    QToolButton* minButton()   const { return m_btnMin; }
+    QToolButton* maxButton()   const { return m_btnMax; }
+    QToolButton* closeButton() const { return m_btnClose; }
 
     void setTitle(const QString& title);
     QString title() const;

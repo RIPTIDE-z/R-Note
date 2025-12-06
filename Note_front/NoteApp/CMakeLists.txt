@@ -14,4 +14,5 @@ target_link_libraries(R-Note
       Qt6::Gui 
       Qt6::Widgets 
       Qt6::Network
+      QWindowKit::Widgets
 )

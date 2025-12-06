@@ -1,4 +1,6 @@
 #include <QApplication>
+#include <QGuiApplication>
+
 #include "mainwindow.h"
 #include "httpmanager.h"
 #include "note_structure_manager.h"
@@ -15,6 +17,7 @@ int main(int argc, char* argv[]) {
 
     mgr.saveToJsonFile("D:/桌面/1/test.json", node.get());
 
+    QGuiApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
     QApplication a(argc, argv);
 
     

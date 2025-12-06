@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 
 #include <QVBoxLayout>
+#include <QWKWidgets/widgetwindowagent.h>
 
 #include "login_window.h"
 #include "register_window.h"
@@ -13,10 +14,9 @@ MainWindow::MainWindow(HttpManager* http, QWidget* parent)
     : QMainWindow(parent),
       stacked_(new QStackedWidget(this))
 {
-    // 1. 先去掉系统标题栏
-    setWindowFlags(windowFlags() | Qt::FramelessWindowHint);
 
-    // 2. 原来的代码照写
+
+
     setWindowTitle("R-Note");
     resize(500, 500);
     setStyleSheet(
@@ -43,7 +43,7 @@ MainWindow::MainWindow(HttpManager* http, QWidget* parent)
     stacked_->addWidget(editorPage_);
     stacked_->setCurrentWidget(loginPage_);
 
-    // 3. 新建一个 central 容器，把标题栏 + stacked_ 放进去
+    // 新建一个 central 容器，把标题栏 + stacked_ 放进去
     auto* central = new QWidget(this);
     auto* layout = new QVBoxLayout(central);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -51,14 +51,29 @@ MainWindow::MainWindow(HttpManager* http, QWidget* parent)
 
     // 标题栏，传入要控制的窗口 this
     auto* titleBar = new CustomTitleBar(this, central);
-    // 想固定高度的话，可以自己设，比如：
+    // 想固定高度的话，可以：
     // titleBar->setFixedHeight(40);
-    // 或用 qss: CustomTitleBar { min-height: 40px; }
 
     layout->addWidget(titleBar);
     layout->addWidget(stacked_);
-
     setCentralWidget(central);
+
+    // ====== 接入 QWindowKit ======
+    // 创建 agent，并尽量早调用 setup（官方推荐）
+    auto* agent = new QWK::WidgetWindowAgent(this);
+    agent->setup(this);
+
+    // 告诉它哪个 widget 是标题栏
+    agent->setTitleBar(titleBar);
+
+    // 告诉它三个系统按钮（为了 Win11 Snap Layout 等系统行为）
+    agent->setSystemButton(QWK::WindowAgentBase::Minimize, titleBar->minButton());
+    agent->setSystemButton(QWK::WindowAgentBase::Maximize, titleBar->maxButton());
+    agent->setSystemButton(QWK::WindowAgentBase::Close, titleBar->closeButton());
+
+    // 如果以后在标题栏里加了 QMenuBar / 搜索框等，需要能正常点击的控件，
+    // 就在这里标一下 hit-test 可见：
+    // agent->setHitTestVisible(titleBar->menuBar(), true);
 
     // 信号连接：切换页面
     connect(loginPage_, &LoginWindow::requestShowRegister,

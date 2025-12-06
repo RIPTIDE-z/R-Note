@@ -9,7 +9,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+set(QWindowKit_DIR
+    "${CMAKE_SOURCE_DIR}/QWindowKit/lib/cmake/QWindowKit")
+
 find_package(Qt6 REQUIRED COMPONENTS Gui Core Widgets Network)
+find_package(QWindowKit COMPONENTS Widgets REQUIRED)
 
 # 添加主程序
 add_subdirectory(NoteApp)
