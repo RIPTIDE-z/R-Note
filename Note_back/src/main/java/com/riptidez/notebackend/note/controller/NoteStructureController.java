@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/note-structure")
 public class NoteStructureController {
     @Autowired
     private NoteService noteService;

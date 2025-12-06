@@ -90,9 +90,10 @@ void HttpManager::updateNoteStructure(const QString& token,
     request.setRawHeader("Auth-Token", token.toUtf8());
 
     QJsonDocument doc(noteStruct);
-    QNetworkReply* reply = m_manager.put(request, doc.toJson());
+    QNetworkReply* reply = m_manager.put(request, doc.toJson(QJsonDocument::Compact));
     reply->setProperty("requestType", "updateNoteStructure");
 }
+
 
 void HttpManager::onReplyFinished(QNetworkReply* reply)
 {

@@ -11,14 +11,18 @@
 #include <QDebug>
 #include <QStandardItemModel>
 #include <QAbstractItemView>
+#include <QFile>
 #include <QSplitter>
 #include <QList>
 
-EditorWindow::EditorWindow(HttpManager* http, QWidget* parent)
-    : QMainWindow(parent)
-    , ui(new Ui::EditorWindow)
-    , m_http(http)
-    , m_structureMgr(new NoteStructureManager(this))
+#include "app_config.h"
+
+EditorWindow::EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent)
+    : QMainWindow(parent),
+    ui(new Ui::EditorWindow),
+    m_http(http),
+    m_config(config),
+    m_structureMgr(new NoteStructureManager(this))
 {
     ui->setupUi(this);
 
@@ -92,6 +96,10 @@ EditorWindow::EditorWindow(HttpManager* http, QWidget* parent)
     // ========= 3. 信号连接 =========
     connect(ui->logoutButton, &QPushButton::clicked,
         this, &EditorWindow::onLogoutClicked);
+    connect(ui->updateButton, &QPushButton::clicked,
+        this, &EditorWindow::onUpdateClicked);
+    connect(ui->syncButton, &QPushButton::clicked,
+        this, &EditorWindow::onSyncClicked);
 
     connect(m_http, &HttpManager::logoutResult,
         this, &EditorWindow::onLogoutResult);
@@ -112,6 +120,7 @@ void EditorWindow::setToken(const QString& token)
     m_token = token;
 }
 
+// 登出逻辑
 void EditorWindow::onLogoutClicked()
 {
     if (m_token.isEmpty()) {
@@ -130,6 +139,67 @@ void EditorWindow::onLogoutClicked()
 
     ui->logoutButton->setEnabled(false);
     m_http->logout(m_token);
+}
+
+// 更新逻辑
+void EditorWindow::onUpdateClicked()
+{
+    if (!m_config) {
+        qDebug() << "Config is null, cannot update note structure";
+        return;
+    }
+
+    const QString rootDir = m_config->projectRoot();
+    if (rootDir.isEmpty()) {
+        qDebug() << "projectRoot is empty, cannot update note structure";
+        return;
+    }
+
+    const QString filePath = rootDir + "/.Note/note_structure.json";
+
+    QFile f(filePath);
+    if (!f.open(QIODevice::ReadOnly)) {
+        qDebug() << "无法读取 json 文件，尝试新建：" << filePath << f.errorString();
+
+        // 调用同一个类的创建逻辑，在这个路径下生成默认结构
+        updateNoteTree(filePath, rootDir);
+
+        // 新建之后再尝试打开
+        if (!f.open(QIODevice::ReadOnly)) {
+            qDebug() << "创建后仍无法打开 json 文件：" << filePath << f.errorString();
+            return;
+        }
+    }
+
+    QByteArray bytes = f.readAll();
+    f.close();
+
+    QJsonParseError err;
+    QJsonDocument doc = QJsonDocument::fromJson(bytes, &err);
+    if (err.error != QJsonParseError::NoError) {
+        qDebug() << "JSON parse error:" << err.errorString();
+        return;
+    }
+    if (!doc.isObject()) {
+        qDebug() << "JSON root is not an object";
+        return;
+    }
+
+    QJsonObject obj = doc.object();
+
+    if (m_token.isEmpty()) {
+        qDebug() << "Token is empty, cannot update";
+        return;
+    }
+
+    // 这里直接复用 HttpManager 接口
+    m_http->updateNoteStructure(m_token, obj);
+}
+
+// 拉取逻辑
+void EditorWindow::onSyncClicked()
+{
+    
 }
 
 void EditorWindow::onLogoutResult(bool ok, const QString& message)
@@ -168,6 +238,8 @@ void EditorWindow::updateNoteTree(const QString& jsonFilePath,
         rootDirPath,
         nextId
     );
+
+    m_structureMgr->saveToJsonFile(jsonFilePath, m_rootNode.get());
 
     if (!m_rootNode) {
         qDebug() << "updateNoteTree: failed to build note structure tree.";

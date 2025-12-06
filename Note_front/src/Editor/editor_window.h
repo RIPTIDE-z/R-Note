@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <memory>
 
+class AppConfig;
 class HttpManager;
 class QStandardItemModel;
 class NoteStructureManager;
@@ -26,7 +27,7 @@ class EditorWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    explicit EditorWindow(HttpManager* http, QWidget* parent = nullptr);
+    explicit EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent = nullptr);
     ~EditorWindow() override;
 
     void setToken(const QString& token);
@@ -40,6 +41,8 @@ signals:
 
 private slots:
     void onLogoutClicked();
+    void onUpdateClicked();
+    void onSyncClicked();
     void onLogoutResult(bool ok, const QString& message);
     void onNetworkError(const QString& error);
     void onTreeItemDoubleClicked(const QModelIndex& index);
@@ -49,6 +52,7 @@ private:
 
     HttpManager* m_http = nullptr;
     QString m_token;
+    AppConfig* m_config;
 
     QStandardItemModel* m_treeModel = nullptr;
 

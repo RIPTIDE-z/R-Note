@@ -69,10 +69,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void updateNoteStructure(Long userId, String noteStructureJson) {
+        log.info("尝试更新用户{}的笔记结构", userId);
         int n = userMapper.updateNoteStructure(userId, noteStructureJson);
         if (n == 0) {
-            throw new RuntimeException("更新笔记结构失败");
+            throw new ExceptionWithMessage("更新笔记结构失败");
         }
+        log.info("为用户{}更新笔记成功", userId);
     }
 
     @Override

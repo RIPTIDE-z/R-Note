@@ -29,7 +29,7 @@ MainWindow::MainWindow(AppConfig* config, HttpManager* http, NoteStructureManage
 
     loginPage_ = new LoginWindow(http, config);
     regPage_ = new RegisterWindow(http, config);
-    editorPage_ = new EditorWindow(http);
+    editorPage_ = new EditorWindow(http, config);
 
     stacked_ = new QStackedWidget(this);
     stacked_->addWidget(loginPage_);
