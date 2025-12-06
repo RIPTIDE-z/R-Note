@@ -8,6 +8,7 @@ qt_add_executable(${PROJECT_NAME}
     ${APP_SOURCES}
 )
 
+
 target_link_libraries(R-Note
     PRIVATE 
       Qt6::Core 

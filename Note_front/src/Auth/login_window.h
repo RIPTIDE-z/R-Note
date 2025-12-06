@@ -3,6 +3,7 @@
 
 #include <QWidget>
 
+class AppConfig;
 class HttpManager;
 class QJsonObject;
 class QEvent;
@@ -15,7 +16,9 @@ class LoginWindow : public QWidget
 {
     Q_OBJECT
 public:
-    explicit LoginWindow(HttpManager* http, QWidget* parent = nullptr);
+    explicit LoginWindow(HttpManager* http,
+        AppConfig* config,
+        QWidget* parent = nullptr);
     ~LoginWindow() override;
 
 protected:
@@ -25,6 +28,9 @@ signals:
     void loginSucceeded(const QString& token, const QJsonObject& noteStructure);
     void requestShowRegister();
 
+    void configChanged(const QString& baseUrl,
+        const QString& projectRoot);
+
 private slots:
     void onLoginClicked();
     void onLoginResult(bool ok,
@@ -33,9 +39,17 @@ private slots:
         const QJsonObject& noteStructure);
     void onNetworkError(const QString& error);
 
+    // “配置…”按钮
+    void onConfigButtonClicked();
+
+    // ConfigDialog 返回成功时
+    void onConfigAccepted(const QString& baseUrl,
+        const QString& projectRoot);
+
 private:
     Ui::LoginWindow* ui;
     HttpManager* m_http;
+    AppConfig* m_config;
 };
 
 #endif // LOGINWINDOW_H

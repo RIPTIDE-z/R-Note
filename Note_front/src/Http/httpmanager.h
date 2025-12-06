@@ -1,20 +1,33 @@
-#ifndef HTTPMANAGER_H
-#define HTTPMANAGER_H
+#pragma once
 
 #include <QObject>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
 #include <QJsonObject>
+#include <QNetworkAccessManager>
 
+class QNetworkReply;
+
+/**
+ * 纯 HTTP 封装：
+ * - 内部保存 m_baseUrl（通过 setBaseUrl 传入）
+ * - 不保存 token / projectRoot，也不写任何文件
+ * - 通过信号把 JSON 结果抛给上层
+ */
 class HttpManager : public QObject
 {
     Q_OBJECT
 public:
     explicit HttpManager(QObject* parent = nullptr);
 
-    // 用户注册/登录
+    // 设置 baseUrl，例如 "http://127.0.0.1:8080/api"
+    void setBaseUrl(const QString& url);
+
+    // POST /auth/register
     void registerUser(const QString& username, const QString& password);
+
+    // POST /auth/login
     void login(const QString& username, const QString& password);
+
+    // POST /auth/logout
     void logout(const QString& token);
     // 笔记结构相关
     void fetchNoteStructure(const QString& token);                 
@@ -23,38 +36,42 @@ public:
 
     void setBaseUrl(const QString& url);
 
+    // GET /note-structure
+    void fetchNoteStructure(const QString& token);
+
+    // PUT /note-structure
+    void updateNoteStructure(const QString& token,
+        const QJsonObject& noteStruct);
+
 signals:
-    // 注册结果
-    void registerResult(bool ok, const QString& message);
-    // 登录结果，ok 为 true 时带 token 和 note_structure
-    void loginResult(bool ok,
-        const QString& message,
+    void networkError(const QString& msg);
+
+    // 登录结果：ok, message, token, note_structure(可能为空对象)
+    void loginResult(bool ok, const QString& msg,
         const QString& token,
-        const QJsonObject& noteStructure);
-    // 退出登录结果
-    void logoutResult(bool ok, const QString& message);
-    // 获取笔记结构
+        const QJsonObject& noteStruct);
+
+    void registerResult(bool ok, const QString& msg);
+    void logoutResult(bool ok, const QString& msg);
+
+    // 笔记结构获取结果
     void noteStructureFetched(bool ok, const QString& msg,
         const QJsonObject& noteStruct);
-    // 笔记结构更新
+
+    // 笔记结构更新结果
     void noteStructureUpdated(bool ok, const QString& msg);
-    // 通用网络错误
-    void networkError(const QString& error);
 
 private slots:
     void onReplyFinished(QNetworkReply* reply);
 
 private:
-    QNetworkAccessManager m_manager;
-    QString m_baseUrl;
-
     void handleLoginResponse(const QJsonObject& obj);
     void handleRegisterResponse(const QJsonObject& obj);
     void handleLogoutResponse(const QJsonObject& obj);
     void handleFetchNoteStructureResponse(const QJsonObject& obj);
     void handleUpdateNoteStructureResponse(const QJsonObject& obj);
 
-    void saveNoteStructureToFile(const QJsonObject& noteStruct);
+private:
+    QNetworkAccessManager m_manager;
+    QString m_baseUrl;
 };
-
-#endif // HTTPMANAGER_H

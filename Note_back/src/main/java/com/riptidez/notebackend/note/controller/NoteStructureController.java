@@ -43,7 +43,7 @@ public class NoteStructureController {
             String structureJson = authService.getNoteStructure(userId);
 
             resp.setCode(0);
-            resp.setMessage("OK");
+            resp.setMessage("成功获取笔记结构");
             resp.setStructure(structureJson);
             resp.setToken(null);
 

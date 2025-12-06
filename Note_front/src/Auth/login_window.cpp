@@ -2,17 +2,23 @@
 #include "ui_login_window.h"
 
 #include "httpmanager.h"
+#include "config_dialog.h"
+#include "app_config.h"
 
 #include <QJsonObject>
 #include <QEvent>
 #include <QPushButton>
 #include <QLineEdit>
 #include <QLabel>
+#include <QWidget>
 
-LoginWindow::LoginWindow(HttpManager* http, QWidget* parent)
+LoginWindow::LoginWindow(HttpManager* http,
+    AppConfig* config,
+    QWidget* parent)
     : QWidget(parent)
     , ui(new Ui::LoginWindow)
     , m_http(http)
+    , m_config(config)
 {
     ui->setupUi(this);
 
@@ -33,6 +39,10 @@ LoginWindow::LoginWindow(HttpManager* http, QWidget* parent)
         this, &LoginWindow::onLoginResult);
     connect(m_http, &HttpManager::networkError,
         this, &LoginWindow::onNetworkError);
+
+    // “配置…”按钮 —— 与 RegisterWindow 相同逻辑
+    connect(ui->configButton, &QPushButton::clicked,
+        this, &LoginWindow::onConfigButtonClicked);
 }
 
 LoginWindow::~LoginWindow()
@@ -62,9 +72,21 @@ void LoginWindow::onLoginClicked()
         return;
     }
 
+    // 强制要求先配置好 Base URL 和 Project Root（和注册窗口保持一致）
+    if (!m_config ||
+        m_config->baseUrl().isEmpty() ||
+        m_config->projectRoot().isEmpty()) {
+        ui->messageLabel->setText(
+            QStringLiteral("请先点击“配置…”设置 Base URL 和 Project Root"));
+        return;
+    }
+
     ui->messageLabel->clear();
     ui->loginButton->setEnabled(false);
-    m_http->login(username, password);
+
+    if (m_http) {
+        m_http->login(username, password);
+    }
 }
 
 void LoginWindow::onLoginResult(bool ok,
@@ -79,7 +101,7 @@ void LoginWindow::onLoginResult(bool ok,
         return;
     }
 
-    // 保持与你原来逻辑一致（原代码写的是“创建成功”，如需可改成“登录成功”）
+    // 如有需要可改为“登录成功”
     ui->messageLabel->setText(QStringLiteral("创建成功"));
     emit loginSucceeded(token, noteStructure);
 }
@@ -88,4 +110,52 @@ void LoginWindow::onNetworkError(const QString& error)
 {
     ui->loginButton->setEnabled(true);
     ui->messageLabel->setText(error);
+}
+
+void LoginWindow::onConfigButtonClicked()
+{
+    QWidget* win = window();   // 顶层窗口 MainWindow
+
+    // 半透明遮罩（和 RegisterWindow 完全一样）
+    auto* overlay = new QWidget(win);
+    overlay->setObjectName("ConfigOverlay");
+    overlay->setStyleSheet(
+        "#ConfigOverlay { background-color: rgba(0, 0, 0, 160); }");
+    overlay->setGeometry(win->rect());
+    overlay->show();
+    overlay->raise();
+
+    const QString baseUrl =
+        m_config ? m_config->baseUrl() : QString();
+    const QString projectRoot =
+        m_config ? m_config->projectRoot() : QString();
+
+    ConfigDialog dlg(baseUrl, projectRoot, win);
+    connect(&dlg, &ConfigDialog::configAccepted,
+        this, &LoginWindow::onConfigAccepted);
+
+    // 居中
+    dlg.adjustSize();
+    const QRect frameGeom = win->frameGeometry();
+    const QSize dlgSize = dlg.size();
+    const QPoint center = frameGeom.center()
+        - QPoint(dlgSize.width() / 2, dlgSize.height() / 2);
+    dlg.move(center);
+
+    dlg.exec();
+    overlay->deleteLater();
+}
+
+void LoginWindow::onConfigAccepted(const QString& baseUrl,
+    const QString& projectRoot)
+{
+    if (m_config) {
+        m_config->setBaseUrl(baseUrl);
+        m_config->setProjectRoot(projectRoot);
+    }
+
+    // 清掉之前的错误提示
+    ui->messageLabel->clear();
+
+    emit configChanged(baseUrl, projectRoot);
 }
