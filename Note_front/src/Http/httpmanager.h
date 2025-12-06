@@ -29,6 +29,12 @@ public:
 
     // POST /auth/logout
     void logout(const QString& token);
+    // 笔记结构相关
+    void fetchNoteStructure(const QString& token);                 
+    void updateNoteStructure(const QString& token,
+        const QJsonObject& noteStruct);       
+
+    void setBaseUrl(const QString& url);
 
     // GET /note-structure
     void fetchNoteStructure(const QString& token);
