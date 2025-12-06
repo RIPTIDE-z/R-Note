@@ -34,15 +34,6 @@ public:
     void updateNoteStructure(const QString& token,
         const QJsonObject& noteStruct);       
 
-    void setBaseUrl(const QString& url);
-
-    // GET /note-structure
-    void fetchNoteStructure(const QString& token);
-
-    // PUT /note-structure
-    void updateNoteStructure(const QString& token,
-        const QJsonObject& noteStruct);
-
 signals:
     void networkError(const QString& msg);
 

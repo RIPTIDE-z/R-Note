@@ -32,7 +32,7 @@ public:
     void setToken(const QString& token);
 
     // 初始化左侧 TreeView 的结构：传入 json 文件和根目录
-    void initNoteTree(const QString& jsonFilePath, const QString& rootDirPath);
+    void updateNoteTree(const QString& jsonFilePath, const QString& rootDirPath);
 
 signals:
     // 通知主程序切回登录界面

@@ -16,18 +16,15 @@ ConfigDialog::ConfigDialog(const QString& baseUrl,
     QWidget* parent)
     : QDialog(parent)
 {
-    // 1. 去掉系统标题栏，用自定义 titlebar + QWindowKit
-    //    注意：这里不要再单独加 Qt::Dialog 的窗口风格，否则边框可能异常
+    // 去掉系统标题栏，用自定义 titlebar + QWindowKit
     setWindowFlag(Qt::FramelessWindowHint, true);
     setAttribute(Qt::WA_StyledBackground, true);
     setAttribute(Qt::WA_TranslucentBackground, true);
 
-    // 2. 让窗口一开始就稍微“长一点”
-    //    你可以根据喜好自行调整
     resize(400, 320);
     setMinimumSize(400, 260);
 
-    // 3. 顶层 layout：0 margin，把真正内容放进一个容器 widget，方便圆角/背景
+    // 顶层 layout：0 margin，把真正内容放进一个容器 widget，方便圆角/背景
     auto* rootLayout = new QVBoxLayout(this);
     rootLayout->setContentsMargins(0, 0, 0, 0);
     rootLayout->setSpacing(0);
@@ -52,11 +49,11 @@ ConfigDialog::ConfigDialog(const QString& baseUrl,
     frameLayout->setContentsMargins(0, 0, 0, 0);
     frameLayout->setSpacing(0);
 
-    // 4. 自定义标题栏，传入当前对话框作为 window
+    // 自定义标题栏，传入当前对话框作为 window
     auto* titleBar = new CustomTitleBar(this, frame);
     titleBar->setTitle(tr(""));
 
-    // 只在这个对话框里隐藏最小化 / 最大化按钮
+    // 只在这个对话框里隐藏 最小化 / 最大化 按钮
     if (auto btnMin = titleBar->minButton()) {
         btnMin->hide();
     }
@@ -66,7 +63,7 @@ ConfigDialog::ConfigDialog(const QString& baseUrl,
 
     frameLayout->addWidget(titleBar);
 
-    // 5. 中间内容区
+    // 内容区
     auto* content = new QWidget(frame);
     auto* contentLayout = new QVBoxLayout(content);
     contentLayout->setContentsMargins(16, 16, 16, 16);
@@ -126,18 +123,17 @@ ConfigDialog::ConfigDialog(const QString& baseUrl,
 
     frameLayout->addWidget(content);
 
-    // 6. QWindowKit：让这个 Dialog 也用自定义标题栏拖动/缩放
+    // QWindowKit：让这个 Dialog 也用自定义标题栏拖动/缩放
     auto* agent = new QWK::WidgetWindowAgent(this);
     agent->setup(this);
     agent->setTitleBar(titleBar);
-    // 如果你不想这个小窗支持最大化/最小化，就只标记 Close 按钮：
+    // 只标记 Close 按钮：
     agent->setSystemButton(QWK::WindowAgentBase::Close, titleBar->closeButton());
 
-    // 7. 标题栏上的按钮逻辑（这里通常只需要关闭）
+    // 标题栏上的按钮逻辑（这里只需要关闭）
     connect(titleBar->closeButton(), &QToolButton::clicked,
         this, &QDialog::reject);
 
-    // 8. 内容区信号槽
     connect(cancelBtn, &QPushButton::clicked,
         this, &QDialog::reject);
     connect(okBtn, &QPushButton::clicked,
@@ -160,15 +156,18 @@ void ConfigDialog::onBrowseProjectRoot()
 
 void ConfigDialog::onAcceptClicked()
 {
+    // 获取到填写的配置
     const QString baseUrl = m_baseUrlEdit->text().trimmed();
     const QString projectDir = m_projectRootEdit->text().trimmed();
 
+    // 判空
     if (baseUrl.isEmpty() || projectDir.isEmpty()) {
         m_errorLabel->setText(tr("Base URL 和 Project Root 都不能为空。"));
         return;
     }
 
     m_errorLabel->clear();
+    // 发出接受配置的信号，由login/register窗口接受
     emit configAccepted(baseUrl, projectDir);
     accept();
 }

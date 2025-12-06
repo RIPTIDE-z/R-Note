@@ -43,6 +43,8 @@ LoginWindow::LoginWindow(HttpManager* http,
     // “配置…”按钮 —— 与 RegisterWindow 相同逻辑
     connect(ui->configButton, &QPushButton::clicked,
         this, &LoginWindow::onConfigButtonClicked);
+
+
 }
 
 LoginWindow::~LoginWindow()
@@ -157,5 +159,6 @@ void LoginWindow::onConfigAccepted(const QString& baseUrl,
     // 清掉之前的错误提示
     ui->messageLabel->clear();
 
+    // 发出配置更改的信号，由 AppConfig 接收
     emit configChanged(baseUrl, projectRoot);
 }

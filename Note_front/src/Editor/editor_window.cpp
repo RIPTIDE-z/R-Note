@@ -152,8 +152,13 @@ void EditorWindow::onNetworkError(const QString& error)
     QMessageBox::warning(this, "Network error", error);
 }
 
-void EditorWindow::initNoteTree(const QString& jsonFilePath,
-    const QString& rootDirPath)
+/**
+ * @brief 根据Json文件和目录更新Treeview
+ * @param jsonFilePath Json文件路径
+ * @param rootDirPath 笔记根目录
+ */
+void EditorWindow::updateNoteTree(const QString& jsonFilePath,
+                                  const QString& rootDirPath)
 {
     int nextId = 1;
 
@@ -165,7 +170,7 @@ void EditorWindow::initNoteTree(const QString& jsonFilePath,
     );
 
     if (!m_rootNode) {
-        qDebug() << "initNoteTree: failed to build note structure tree.";
+        qDebug() << "updateNoteTree: failed to build note structure tree.";
         // 空 model
         if (m_treeModel) {
             delete m_treeModel;
