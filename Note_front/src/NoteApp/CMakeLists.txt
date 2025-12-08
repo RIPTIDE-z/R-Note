@@ -1,6 +1,7 @@
 set(APP_SOURCES
     main.cpp
     ${CMAKE_SOURCE_DIR}/resource/resource.qrc
+    ${CMAKE_SOURCE_DIR}/resource/app_icon.rc
 )
 
 qt_add_executable(${PROJECT_NAME}
