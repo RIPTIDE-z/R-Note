@@ -16,7 +16,7 @@
     <!--  -->
     <insert id="insert" parameterType="NoteHistory"
             useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO note_history (
+        INSERT INTO notehistory (
         note_id,
         version,
         created_time,
@@ -40,7 +40,7 @@
         created_time,
         content,
         change_summary
-        FROM note_history
+        FROM notehistory
         WHERE note_id = #{noteId}
         ORDER BY version ASC
     </select>
@@ -53,7 +53,7 @@
         created_time,
         content,
         change_summary
-        FROM note_history
+        FROM notehistory
         WHERE note_id = #{noteId}
         AND version = #{version}
         LIMIT 1
@@ -67,7 +67,7 @@
         created_time,
         content,
         change_summary
-        FROM note_history
+        FROM notehistory
         WHERE note_id = #{noteId}
         ORDER BY version DESC
         LIMIT 1
