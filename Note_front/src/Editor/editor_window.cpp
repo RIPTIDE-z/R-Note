@@ -5,6 +5,8 @@
 #include "note_structure_manager.h"
 #include "markdown_editor_widget.h"
 
+#include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QPushButton>
 #include <QMessageBox>
 #include <QTreeView>
@@ -100,20 +102,35 @@ EditorWindow::EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent
 
     // ========= 在右侧加入 MarkdownEditorWidget =========
 
-    // 删除占位 label
-    if (ui->editorPlaceholderLabel)
-    {
-        ui->rightLayout->removeWidget(ui->editorPlaceholderLabel);
-        ui->editorPlaceholderLabel->deleteLater();
-        ui->editorPlaceholderLabel = nullptr;
-    }
+    // 中间的容器：以后你有多个 widget（编辑器 + 次级预览）也可以都放里面
+    QWidget* centerContainer = new QWidget(ui->rightPanel);
+    auto* centerVLayout = new QVBoxLayout(centerContainer);
+    centerVLayout->setContentsMargins(0, 0, 0, 0);
+    centerVLayout->setSpacing(0);
 
-    // 创建主编辑器/预览控件
-    m_mainEditor = new MarkdownEditorWidget(ui->rightPanel);
-    ui->rightLayout->addWidget(m_mainEditor);
+    // 真正的 markdown 编辑/预览控件
+    m_mainEditor = new MarkdownEditorWidget(centerContainer);
+    centerVLayout->addWidget(m_mainEditor);
 
-    // 临时写死md文件
-    const QString testPath = "E:/Qt Project/Md4cDemo/test.md";
+    // 外层水平布局：左右留空，中间 80%
+    auto* outerHLayout = new QHBoxLayout;
+    outerHLayout->setContentsMargins(0, 0, 0, 0);
+    outerHLayout->setSpacing(0);
+
+    outerHLayout->addStretch();              // 左侧空白
+    outerHLayout->addWidget(centerContainer);
+    outerHLayout->addStretch();              // 右侧空白
+
+    // 设置拉伸比例：1 : 8 : 1  => 中间 80%
+    outerHLayout->setStretch(0, 1);
+    outerHLayout->setStretch(1, 8);
+    outerHLayout->setStretch(2, 1);
+
+    // 把这个水平布局塞到 rightLayout 里
+    ui->rightLayout->addLayout(outerHLayout);
+
+    // 临时写死 md 文件路径
+    const QString testPath = "D:/桌面/1/test.md";
     m_mainEditor->setFilePath(testPath);
     m_mainEditor->loadFromFile();
 
@@ -465,6 +482,4 @@ void EditorWindow::onTreeItemDoubleClicked(const QModelIndex& index)
         .arg(id)
         .arg(remoteId)
         .arg(fullPath));
-
-    // TODO: 在这里接你后面的编辑器逻辑
 }

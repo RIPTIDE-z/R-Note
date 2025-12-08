@@ -20,9 +20,23 @@ MarkdownEditorWidget::MarkdownEditorWidget(QWidget* parent)
     m_preview = new MarkdownPreviewWidget(this);
     m_stack = new QStackedWidget(this);
 
+    m_editor->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_editor->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
     m_stack->addWidget(m_editor);   // index 0: 编辑
     m_stack->addWidget(m_preview);  // index 1: 预览
-    m_stack->setCurrentWidget(m_preview);
+    m_stack->setCurrentWidget(m_editor);
+
+    QFont monoFont("JetBrains Mono");
+    monoFont.setStyleHint(QFont::Monospace);  // 提示是等宽
+    monoFont.setPointSize(13);                // 自己调字号
+    m_editor->setFont(monoFont);
+    m_preview->setFont(monoFont);
+
+    QPalette pal = m_editor->palette();
+    pal.setColor(QPalette::Base, QColor("#2a2a2a"));   // 背景色
+    pal.setColor(QPalette::Text, QColor("#e0e0e0"));   // 字体颜色（选）
+    m_editor->setPalette(pal);
 
     // 自动保存计时器
     m_autoSaveTimer = new QTimer(this);
