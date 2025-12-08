@@ -4,33 +4,25 @@ DATABASE IF NOT EXISTS note_db
   DEFAULT CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
-USE
-note_db;
+USE note_db;
 
--- 笔记表：Note
-CREATE TABLE `Note`
+-- 笔记表
+CREATE TABLE `note`
 (
     -- 笔记ID：主键，自增，非空
     id                 BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '笔记ID，主键',
 
-    -- 所属用户ID：非空，外键到 auth_db.User.id
+    -- 所属用户ID：非空，外键到 auth_db.user.id
     user_id            BIGINT UNSIGNED NOT NULL COMMENT '所属用户ID',
 
     -- 当前历史ID：可以为空（刚创建时可不指向任何历史），外键到 NoteHistory.id
     current_history_id BIGINT UNSIGNED NULL COMMENT '当前历史版本ID',
 
-    PRIMARY KEY (id),
-
-    -- 外键：指向 auth_db.User(id)
-    CONSTRAINT fk_note_user
-        FOREIGN KEY (user_id)
-            REFERENCES auth_db.`User` (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
+    PRIMARY KEY (id)
 ) ENGINE=InnoDB;
 
--- 笔记历史表：NoteHistory
-CREATE TABLE `NoteHistory`
+-- 笔记历史表
+CREATE TABLE `note_history`
 (
     -- ID：主键，自增，非空
     id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '历史记录ID，主键',
@@ -55,10 +47,12 @@ CREATE TABLE `NoteHistory`
     -- 同一 note_id 下 version 唯一
     UNIQUE KEY uq_notehistory_note_version (note_id, version),
 
-    -- 外键：指向 Note(id)
+    -- 外键：NoteHistory.note_id -> Note.id
+    -- 删除笔记时自动删除历史
+    -- 若手动改id会自动同步
     CONSTRAINT fk_notehistory_note
         FOREIGN KEY (note_id)
-            REFERENCES `Note` (id)
+            REFERENCES `note` (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE,
 
@@ -66,10 +60,12 @@ CREATE TABLE `NoteHistory`
     CHECK (version >= 1)
 ) ENGINE=InnoDB;
 
--- 为 Note.current_history_id 建立外键（需在 NoteHistory 创建后执行）
-ALTER TABLE `Note`
+-- 外键 Note.current_history_id -> NoteHistory.id
+-- 若删除的历史刚好是current_history_id，会将其置NULL
+-- id同步
+ALTER TABLE `note`
     ADD CONSTRAINT fk_note_current_history
         FOREIGN KEY (current_history_id)
-            REFERENCES `NoteHistory` (id)
+            REFERENCES `note_history` (id)
             ON DELETE SET NULL
             ON UPDATE CASCADE;

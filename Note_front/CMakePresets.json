@@ -1,22 +1,47 @@
 {
   "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
   "configurePresets": [
     {
+      "name": "qt-base",
       "hidden": true,
-      "name": "Qt",
       "cacheVariables": {
         "CMAKE_PREFIX_PATH": "$env{QTDIR}"
-      },
-      "vendor": {
-        "qt-project.org/Qt": {
-          "checksum": "wVa86FgEkvdCTVp1/nxvrkaemJc="
-        }
+      }
+    },
+    {
+      "name": "qt-msvc-debug",
+      "displayName": "MSVC Debug",
+      "inherits": "qt-base",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/Debug(msvc)",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "qt-msvc-release",
+      "displayName": "MSVC Release",
+      "inherits": "qt-base",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/Release(msvc)",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
       }
     }
   ],
-  "vendor": {
-    "qt-project.org/Presets": {
-      "checksum": "67SmY24ZeVbebyKD0fGfIzb/bGI="
+  "buildPresets": [
+    {
+      "name": "qt-msvc-debug",
+      "configurePreset": "qt-msvc-debug"
+    },
+    {
+      "name": "qt-msvc-release",
+      "configurePreset": "qt-msvc-release"
     }
-  }
+  ]
 }
