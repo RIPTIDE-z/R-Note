@@ -33,5 +33,8 @@ set(QWINDOWKIT_BUILD_DOCUMENTATIONS OFF CACHE BOOL "" FORCE)
 # 添加QWindowkit依赖
 add_subdirectory(external/QWindowKit)
 
-# src
+# 添加md4c依赖，编译为静态库
+add_subdirectory(external/md4c)
+
+# src, 内含add_executable
 add_subdirectory(src)

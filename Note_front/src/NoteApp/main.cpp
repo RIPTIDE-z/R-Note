@@ -12,6 +12,7 @@ int main(int argc, char* argv[])
     QGuiApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
     QApplication a(argc, argv);
 
+    // 设置程序Icon
     QIcon appIcon(":/icon/note_512.png");
     a.setWindowIcon(appIcon);
 

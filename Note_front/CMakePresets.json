@@ -15,7 +15,7 @@
     },
     {
       "name": "qt-msvc-debug",
-      "displayName": "MSVC Debug",
+      "hidden": true,
       "inherits": "qt-base",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/Debug(msvc)",
@@ -25,7 +25,7 @@
     },
     {
       "name": "qt-msvc-release",
-      "displayName": "MSVC Release",
+      "hidden": true,
       "inherits": "qt-base",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/Release(msvc)",

@@ -17,6 +17,7 @@ target_link_libraries(R-Note
       Qt6::Widgets 
       Qt6::Network
       QWindowKit::Widgets
+      md4c
 )
 
 install(TARGETS R-Note
