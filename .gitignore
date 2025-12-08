@@ -1,12 +1,13 @@
 /.history/
 
-Note_back/.idea/
-Note_back/.mvn/
-Note_back/logs/
-Note_back/target/
+/Note_back/.idea/
+/Note_back/.mvn/
+/Note_back/logs/
+/Note_back/target/
 Note_back/src/main/resources/config/db_credential.yml
 
-Note_front/.vs/
-Note_front/out/
+/Note_front/.vs/
+/Note_front/out/
+/Note_front/bin/
 Note_front/Folder.DotSettings.user
 Note_front/CMakeUserPresets.json

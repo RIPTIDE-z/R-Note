@@ -1,13 +1,13 @@
 # R-Note
 
-> - 项目依赖[`qwindowkit`](https://github.com/stdware/qwindowkit)，若要进行前端开发，请使用`--recursive`克隆项目
+> - 项目依赖 [qwindowkit](https://github.com/stdware/qwindowkit)，若要进行前端开发，请使用`--recursive`克隆项目
 > - `git clone --recursive https://github.com/RIPTIDE-z/R-Note.git`
 
 ## 项目说明
 
 - 实践分布式事务控制的项目
   - 后端使用 `Spring Boot` + `Druid` + `MyBatis` + `Atomikos` + `MySQL`
-  - 前端使用 `Qt Widgets` + `qwindowkit`框架
+  - 前端使用 `Qt Widgets` + `qwindowkit`框架(实现windows无边框设计)
   - 使用 `RESTful API`标准、`APIfox`软件辅助设计接口
 - 项目整体为带有简单 **用户注册/登录**，笔记 **历史查看/回滚** 的代码笔记软件
 
@@ -15,9 +15,17 @@
 
 ### 数据库配置说明
 
-1. 服务端需要创建 `auth_db` `note_db`两个数据库
+1. 服务端需要安装MySQL创建 `auth_db` `note_db`两个数据库并创建管理员用户(开发环境也可全使用root进行测试)
+   - 创建脚本位于 [sql脚本](./Note_back/src/main/resources/sql)
+   - 在root运行`auth_db_init.sql`  `note_db_init.sql`
+   - 在root运行`admin_init.sql`，注意 **配置自己的密码**
+      ```sql
+      CREATE USER IF NOT EXISTS 'auth_admin'@'localhost'
+         IDENTIFIED BY '你的密码';
 
-   - 创建脚本位于 `Note_back\src\main\resources\sql`
+      CREATE USER IF NOT EXISTS 'note_admin'@'localhost'
+         IDENTIFIED BY '你的密码';
+      ```
 2. 数据库连接所需用户密码配置方式为 `application.yml`引入 `db_credential.yml`文件，具体信息均在其中配置
 
    - **开发环境** :
@@ -26,6 +34,15 @@
          spring:
             config:
                import: "classpath:db_credential.yml"
+         ```
+         ```yml
+         auth_db:
+            username:
+            password:
+
+         note_db:
+            username:
+            password:
          ```
    - **部署**：
       - 使用`optional:file:config/db_credential.yml`的配置选项
@@ -40,6 +57,8 @@
    - 使用`CMakUserePresets.json`作为用户级配置文件，已给出`CMakUserePresets_example.json`示例
       - 在其中的`QTDIR`中配置你自己Qt库的安装位置，如`"QTDIR": "D:/Qt/6.9.3/msvc2022_64"`
    - 实际构建请选择`Debug` `Release` ， `qt-msvc-debug/release`选项是为了配置基础信息的配置项
+   - 默认将QWindowkit的库静态编译到程序
+      - 使用时要么配置Qt到环境变量要么使用`Windeployqt`部署程序(用法略)
 
 ---
 
@@ -64,17 +83,31 @@
 
 ## Release 0.1
 
-- Release0.1 为框架合作的验证程序，实际运行效果类似学生管理系统
+- 框架合作的验证程序，实际运行效果类似学生管理系统
+
+![](image/release0.1.png)
 
 ---
 
 ## Release 0.2
 
-- Release0.2 为前后端协作的第一个测试版本，验证了注册/登录接口可行性并创建简单前端页面
+- 前后端协作的第一个测试版本，验证了注册/登录接口可行性并创建简单前端页面
+
+---
+
+## Release 0.3
+
+- 第二个测试版本
+   - 验证了笔记结构的可行性
+   - 建立了配置界面，让配置信息可以主动更改
+   - 优化数据库建立和管理逻辑，让linux和windows逻辑统一
+
+- `Ubuntu 22.04` 远端服务器测试：
+![](image/linux_test.png)
 
 ---
 
 # License说明
 
 - 本项目使用 [MIT协议](./LICENSE.md)
-- 项目引用[`qwindowkit`](https://github.com/stdware/qwindowkit),使用 [Apache 2.0 License](https://github.com/stdware/qwindowkit/blob/main/LICENSE)
+- 项目引用[qwindowkit](https://github.com/stdware/qwindowkit),使用 [Apache 2.0 License](https://github.com/stdware/qwindowkit/blob/main/LICENSE)

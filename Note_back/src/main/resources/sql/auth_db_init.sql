@@ -4,11 +4,10 @@ DATABASE IF NOT EXISTS auth_db
   DEFAULT CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
-USE
-auth_db;
+USE auth_db;
 
--- 用户表：User
-CREATE TABLE `User`
+-- 用户表：user
+CREATE TABLE `user`
 (
     -- 用户ID：主键，自增，非空
     id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '用户ID，主键',
