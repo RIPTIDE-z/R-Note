@@ -1,5 +1,4 @@
-#ifndef EDITORWINDOW_H
-#define EDITORWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 #include <memory>
@@ -11,6 +10,7 @@ class NoteStructureManager;
 struct NoteNode;
 class QModelIndex;
 class QSplitter;
+class MarkdownEditorWidget;
 
 namespace Ui {
     class EditorWindow;
@@ -69,6 +69,7 @@ private:
 
     // 左右分栏的 splitter
     QSplitter* m_splitter = nullptr;
-};
 
-#endif // EDITORWINDOW_H
+    // 新增：右侧主编辑器/预览控件
+    MarkdownEditorWidget* m_mainEditor = nullptr;
+};

@@ -3,6 +3,7 @@
 
 #include "httpmanager.h"
 #include "note_structure_manager.h"
+#include "markdown_editor_widget.h"
 
 #include <QPushButton>
 #include <QMessageBox>
@@ -21,18 +22,18 @@
 
 EditorWindow::EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent)
     : QMainWindow(parent),
-    ui(new Ui::EditorWindow),
-    m_http(http),
-    m_config(config),
-    m_structureMgr(new NoteStructureManager(this))
+      ui(new Ui::EditorWindow),
+      m_http(http),
+      m_config(config),
+      m_structureMgr(new NoteStructureManager(this))
 {
     ui->setupUi(this);
 
-    // ========= 1. TreeView 外观与行为设置 =========
+    // ========= TreeView  =========
     {
         QFont f = ui->treeView->font();
-        f.setPointSize(14);                    // 字号
-        f.setFamily("JetBrains Mono");         // 字体名
+        f.setPointSize(14); // 字号
+        f.setFamily("JetBrains Mono"); // 字体名
         // f.setBold(true);                    // 如需加粗可打开
         ui->treeView->setFont(f);
 
@@ -44,7 +45,7 @@ EditorWindow::EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent
         ui->treeView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     }
 
-    // ========= 2. 用 QSplitter 管左右两块 =========
+    // ========= 用 QSplitter 管界面比例 =========
     // .ui 中 centralLayout 下有：
     //  - mainHLayout（里面是 leftPanel / rightPanel）
     //  - bottomBarLayout（里面是 logoutButton）
@@ -62,7 +63,7 @@ EditorWindow::EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent
     // 创建水平 splitter，作为 mainHLayout 唯一的子 widget
     m_splitter = new QSplitter(Qt::Horizontal, ui->centralwidget);
     m_splitter->setObjectName("editorSplitter");
-    m_splitter->setHandleWidth(4);              // 分割条宽度
+    m_splitter->setHandleWidth(4); // 分割条宽度
 
     // 分割条样式（可按需调整）
     m_splitter->setStyleSheet(
@@ -81,42 +82,61 @@ EditorWindow::EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent
     // 初始大小：近似 1:3
     {
         QList<int> sizes;
-        sizes << 260 << 740;  // 左：大纲，右：编辑区
+        sizes << 260 << 740; // 左：大纲，右：编辑区
         m_splitter->setSizes(sizes);
     }
 
     // 清空 mainHLayout 里原有 item，只放一个 splitter
-    while (ui->mainHLayout->count() > 0) {
+    while (ui->mainHLayout->count() > 0)
+    {
         QLayoutItem* item = ui->mainHLayout->takeAt(0);
-        if (!item->widget()) {
+        if (!item->widget())
+        {
             delete item;
         }
     }
     ui->mainHLayout->addWidget(m_splitter);
     // 以后左右比例完全由 splitter 管理，不再使用 setStretch
 
+    // ========= 在右侧加入 MarkdownEditorWidget =========
+
+    // 删除占位 label
+    if (ui->editorPlaceholderLabel)
+    {
+        ui->rightLayout->removeWidget(ui->editorPlaceholderLabel);
+        ui->editorPlaceholderLabel->deleteLater();
+        ui->editorPlaceholderLabel = nullptr;
+    }
+
+    // 创建主编辑器/预览控件
+    m_mainEditor = new MarkdownEditorWidget(ui->rightPanel);
+    ui->rightLayout->addWidget(m_mainEditor);
+
+    // 临时写死md文件
+    const QString testPath = "E:/Qt Project/Md4cDemo/test.md";
+    m_mainEditor->setFilePath(testPath);
+    m_mainEditor->loadFromFile();
+
+
     // ========= 3. 信号连接 =========
     connect(ui->logoutButton, &QPushButton::clicked,
-        this, &EditorWindow::onLogoutClicked);
+            this, &EditorWindow::onLogoutClicked);
     connect(ui->updateButton, &QPushButton::clicked,
-        this, &EditorWindow::onUpdateClicked);
+            this, &EditorWindow::onUpdateClicked);
     connect(ui->syncButton, &QPushButton::clicked,
-        this, &EditorWindow::onSyncClicked);
+            this, &EditorWindow::onSyncClicked);
 
     connect(m_http, &HttpManager::logoutResult,
-        this, &EditorWindow::onLogoutResult);
+            this, &EditorWindow::onLogoutResult);
     connect(m_http, &HttpManager::networkError,
-        this, &EditorWindow::onNetworkError);
+            this, &EditorWindow::onNetworkError);
     connect(m_http, &HttpManager::updateNoteStructureResult,
-        this, &EditorWindow::onUpdateResult);
+            this, &EditorWindow::onUpdateResult);
     connect(m_http, &HttpManager::fetchNoteStructureResult,
-        this, &EditorWindow::onFetchResult);
-
-    
-
+            this, &EditorWindow::onFetchResult);
 
     connect(ui->treeView, &QTreeView::doubleClicked,
-        this, &EditorWindow::onTreeItemDoubleClicked);
+            this, &EditorWindow::onTreeItemDoubleClicked);
 }
 
 EditorWindow::~EditorWindow()
@@ -132,7 +152,8 @@ void EditorWindow::setToken(const QString& token)
 // 登出逻辑
 void EditorWindow::onLogoutClicked()
 {
-    if (m_token.isEmpty()) {
+    if (m_token.isEmpty())
+    {
         // 保险起见，没 token 直接认为已登出
         emit logoutSucceeded();
         return;
@@ -142,7 +163,8 @@ void EditorWindow::onLogoutClicked()
         this,
         "Confirm logout",
         "确定要登出账号吗?");
-    if (ret != QMessageBox::Yes) {
+    if (ret != QMessageBox::Yes)
+    {
         return;
     }
 
@@ -154,18 +176,21 @@ void EditorWindow::onLogoutClicked()
 void EditorWindow::onUpdateClicked()
 {
     // TODO:弹出确认窗口
-    if (!m_config) {
+    if (!m_config)
+    {
         qDebug() << "Config is null, cannot update note structure";
         return;
     }
 
     const QString rootDir = m_config->projectRoot();
-    if (rootDir.isEmpty()) {
+    if (rootDir.isEmpty())
+    {
         qDebug() << "projectRoot is empty, cannot update note structure";
         return;
     }
 
-    if (m_token.isEmpty()) {
+    if (m_token.isEmpty())
+    {
         qDebug() << "Token is empty, cannot update";
         return;
     }
@@ -175,8 +200,10 @@ void EditorWindow::onUpdateClicked()
     // 确保目录存在
     QFileInfo info(filePath);
     QDir dir = info.dir();
-    if (!dir.exists()) {
-        if (!dir.mkpath(".")) {
+    if (!dir.exists())
+    {
+        if (!dir.mkpath("."))
+        {
             qDebug() << "Failed to create dir for note_structure.json:"
                 << dir.absolutePath();
             return;
@@ -188,7 +215,8 @@ void EditorWindow::onUpdateClicked()
 
     // 2) 读取刚刚生成的 json 文件
     QFile f(filePath);
-    if (!f.open(QIODevice::ReadOnly)) {
+    if (!f.open(QIODevice::ReadOnly))
+    {
         qDebug() << "创建/更新后仍无法读取 json 文件：" << filePath << f.errorString();
         return;
     }
@@ -198,11 +226,13 @@ void EditorWindow::onUpdateClicked()
 
     QJsonParseError err;
     QJsonDocument doc = QJsonDocument::fromJson(bytes, &err);
-    if (err.error != QJsonParseError::NoError) {
+    if (err.error != QJsonParseError::NoError)
+    {
         qDebug() << "JSON parse error:" << err.errorString();
         return;
     }
-    if (!doc.isObject()) {
+    if (!doc.isObject())
+    {
         qDebug() << "JSON root is not an object";
         return;
     }
@@ -219,11 +249,13 @@ void EditorWindow::onSyncClicked()
 {
     // TODO: 弹出确认窗口
     qDebug() << "尝试同步笔记";
-    if (m_token.isEmpty()) {
+    if (m_token.isEmpty())
+    {
         qDebug() << "Token is empty, cannot fetch note structure";
         return;
     }
-    if (!m_config) {
+    if (!m_config)
+    {
         qDebug() << "Config is null, cannot fetch note structure";
         return;
     }
@@ -236,7 +268,8 @@ void EditorWindow::onLogoutResult(bool ok, const QString& message)
 {
     ui->logoutButton->setEnabled(true);
 
-    if (!ok) {
+    if (!ok)
+    {
         QMessageBox::warning(this, "Logout failed", message);
         return;
     }
@@ -248,7 +281,8 @@ void EditorWindow::onLogoutResult(bool ok, const QString& message)
 
 void EditorWindow::onUpdateResult(bool ok, const QString& message)
 {
-    if (!ok) {
+    if (!ok)
+    {
         QMessageBox::warning(this, "更新失败", message);
         return;
     }
@@ -259,19 +293,22 @@ void EditorWindow::onFetchResult(bool ok, const QString& message, const QJsonObj
 {
     qDebug() << "fetch note structure result:" << ok << message;
 
-    if (!ok) {
+    if (!ok)
+    {
         // 这里可以弹个对话框或状态栏提示
         // showMessage(message);
         return;
     }
 
-    if (!m_config) {
+    if (!m_config)
+    {
         qDebug() << "Config is null in onFetchResult";
         return;
     }
 
     const QString rootDir = m_config->projectRoot();
-    if (rootDir.isEmpty()) {
+    if (rootDir.isEmpty())
+    {
         qDebug() << "projectRoot is empty in onFetchResult";
         return;
     }
@@ -281,8 +318,10 @@ void EditorWindow::onFetchResult(bool ok, const QString& message, const QJsonObj
     // 确保目录存在
     QFileInfo info(filePath);
     QDir dir = info.dir();
-    if (!dir.exists()) {
-        if (!dir.mkpath(".")) {
+    if (!dir.exists())
+    {
+        if (!dir.mkpath("."))
+        {
             qDebug() << "Failed to create dir for note_structure.json:"
                 << dir.absolutePath();
             return;
@@ -292,7 +331,8 @@ void EditorWindow::onFetchResult(bool ok, const QString& message, const QJsonObj
     // 把后端返回的结构写入本地 json 文件
     QJsonDocument doc(noteStruct);
     QFile f(filePath);
-    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+    {
         qDebug() << "Failed to open note_structure.json for write:"
             << filePath << f.errorString();
         return;
@@ -312,7 +352,7 @@ void EditorWindow::onNetworkError(const QString& error)
 
 // 新建树
 void EditorWindow::initNoteTree(const QString& jsonFilePath,
-    const QString& rootDirPath)
+                                const QString& rootDirPath)
 {
     int nextId = 1;
 
@@ -326,21 +366,24 @@ void EditorWindow::initNoteTree(const QString& jsonFilePath,
     // 把合并后的树结构写回 jsonFilePath
     m_structureMgr->saveToJsonFile(jsonFilePath, m_rootNode.get());
 
-    if (!m_rootNode) {
+    if (!m_rootNode)
+    {
         qDebug() << "initNoteTree: failed to build note structure tree.";
 
-        if (m_treeModel) {
+        if (m_treeModel)
+        {
             delete m_treeModel;
             m_treeModel = nullptr;
         }
         m_treeModel = new QStandardItemModel(ui->treeView);
-        m_treeModel->setHorizontalHeaderLabels({ "Name" });
+        m_treeModel->setHorizontalHeaderLabels({"Name"});
         ui->treeView->setModel(m_treeModel);
         return;
     }
 
     // 重建 model
-    if (m_treeModel) {
+    if (m_treeModel)
+    {
         delete m_treeModel;
         m_treeModel = nullptr;
     }
@@ -364,20 +407,23 @@ void EditorWindow::updateNoteTree(const QString& jsonFilePath,
 
     // 只从 json 文件加载树结构，不扫描目录
     m_rootNode = m_structureMgr->loadFromJsonFile(jsonFilePath, nextId);
-    if (!m_rootNode) {
+    if (!m_rootNode)
+    {
         qDebug() << "updateNoteTree: failed to load note structure tree from json.";
 
-        if (m_treeModel) {
+        if (m_treeModel)
+        {
             delete m_treeModel;
             m_treeModel = nullptr;
         }
         m_treeModel = new QStandardItemModel(ui->treeView);
-        m_treeModel->setHorizontalHeaderLabels({ "Name" });
+        m_treeModel->setHorizontalHeaderLabels({"Name"});
         ui->treeView->setModel(m_treeModel);
         return;
     }
 
-    if (m_treeModel) {
+    if (m_treeModel)
+    {
         delete m_treeModel;
         m_treeModel = nullptr;
     }
@@ -395,7 +441,8 @@ void EditorWindow::onTreeItemDoubleClicked(const QModelIndex& index)
 
     // 取出 type
     QString type = index.data(Qt::UserRole + 2).toString();
-    if (type != "note") {
+    if (type != "note")
+    {
         // folder：双击只做展开/收起，不打开编辑
         return;
     }

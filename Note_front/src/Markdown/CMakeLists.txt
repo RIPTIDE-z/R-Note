@@ -1,7 +1,7 @@
 target_sources(${PROJECT_NAME}
 	PRIVATE
-		${CMAKE_CURRENT_SOURCE_DIR}/hash_processor.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/markdown_renderer.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/markdown_preview_widget.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/markdown_editor_widget.cpp
 )
 
 target_include_directories(${PROJECT_NAME}
