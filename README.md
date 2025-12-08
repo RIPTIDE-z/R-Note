@@ -54,7 +54,7 @@
 
 - 项目开发使用`Qt 6.9.3` `VS`+ `Cmake`构建 + `MSVC`工具链 ，请尽量保证环境一致
 - 构建预设位于`CMakePresets.json`，默认使用`Ninja`
-   - 使用`CMakUserePresets.json`作为用户级配置文件，已给出`CMakUserePresets_example.json`示例
+   - 使用`CMakeUserPresets.json`作为用户级配置文件，已给出`CMakeUserPresets_example.json`示例
       - 在其中的`QTDIR`中配置你自己Qt库的安装位置，如`"QTDIR": "D:/Qt/6.9.3/msvc2022_64"`
    - 实际构建请选择`Debug` `Release` ， `qt-msvc-debug/release`选项是为了配置基础信息的配置项
    - 默认将QWindowkit的库静态编译到程序
