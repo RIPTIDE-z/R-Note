@@ -17,6 +17,3 @@ target_link_libraries(R-Note
       Qt6::Network
       QWindowKit::Widgets
 )
-
-install(TARGETS R-Note
-        RUNTIME DESTINATION .)
