@@ -15,7 +15,7 @@
 #include <QStandardItemModel>
 #include <QAbstractItemView>
 #include <QFile>
-#include <qfileinfo.h>
+#include <QFileInfo>
 #include <QSplitter>
 #include <QList>
 #include <QDir>
@@ -31,76 +31,42 @@ EditorWindow::EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent
 {
     ui->setupUi(this);
 
-    // ========= TreeView  =========
+    // ================================= TreeView  =================================
+
+    QFont f = ui->treeView->font();
+    f.setPointSize(14); // 字号
+    f.setFamily("JetBrains Mono"); // 字体名
+    ui->treeView->setFont(f);
+
+    // 双击展开
+    ui->treeView->setExpandsOnDoubleClick(true);
+    ui->treeView->setUniformRowHeights(true);
+    ui->treeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    // 关闭水平滚动条，避免被压窄时横向滚动条闪一下
+    ui->treeView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    // =============================== 左侧 QSplitter ===============================
+
+    // 使用 ui 中的 mainSplitter，不再手动移除 left/rightPanel
+    m_splitter = ui->mainSplitter;
+    if (m_splitter)
     {
-        QFont f = ui->treeView->font();
-        f.setPointSize(14); // 字号
-        f.setFamily("JetBrains Mono"); // 字体名
-        // f.setBold(true);                    // 如需加粗可打开
-        ui->treeView->setFont(f);
-
-        ui->treeView->setExpandsOnDoubleClick(true);
-        ui->treeView->setUniformRowHeights(true);
-        ui->treeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-
-        // 关闭水平滚动条，避免被压窄时横向滚动条闪一下
-        ui->treeView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        m_splitter->setHandleWidth(4);
+        m_splitter->setStyleSheet(
+            "QSplitter::handle:horizontal {"
+            "    background: #444444;"
+            "}"
+            "QSplitter::handle:horizontal:hover {"
+            "    background: #888888;"
+            "}"
+        );
+        // 左右拉伸比例 1:3
+        m_splitter->setStretchFactor(0, 1);
+        m_splitter->setStretchFactor(1, 3);
     }
 
-    // ========= 用 QSplitter 管界面比例 =========
-    // .ui 中 centralLayout 下有：
-    //  - mainHLayout（里面是 leftPanel / rightPanel）
-    //  - bottomBarLayout（里面是 logoutButton）
-    //
-    // 这里把 leftPanel / rightPanel 从 mainHLayout 移出，
-    // 放进一个水平 QSplitter，实现中间拖动分栏。
-
-    QWidget* leftPanel = ui->leftPanel;
-    QWidget* rightPanel = ui->rightPanel;
-
-    // 从原来的 mainHLayout 中移除
-    ui->mainHLayout->removeWidget(leftPanel);
-    ui->mainHLayout->removeWidget(rightPanel);
-
-    // 创建水平 splitter，作为 mainHLayout 唯一的子 widget
-    m_splitter = new QSplitter(Qt::Horizontal, ui->centralwidget);
-    m_splitter->setObjectName("editorSplitter");
-    m_splitter->setHandleWidth(4); // 分割条宽度
-
-    // 分割条样式（可按需调整）
-    m_splitter->setStyleSheet(
-        "QSplitter::handle:horizontal {"
-        "    background: #444444;"
-        "}"
-        "QSplitter::handle:horizontal:hover {"
-        "    background: #888888;"
-        "}"
-    );
-
-    // 把左右 panel 放进 splitter
-    m_splitter->addWidget(leftPanel);
-    m_splitter->addWidget(rightPanel);
-
-    // 初始大小：近似 1:3
-    {
-        QList<int> sizes;
-        sizes << 260 << 740; // 左：大纲，右：编辑区
-        m_splitter->setSizes(sizes);
-    }
-
-    // 清空 mainHLayout 里原有 item，只放一个 splitter
-    while (ui->mainHLayout->count() > 0)
-    {
-        QLayoutItem* item = ui->mainHLayout->takeAt(0);
-        if (!item->widget())
-        {
-            delete item;
-        }
-    }
-    ui->mainHLayout->addWidget(m_splitter);
-    // 以后左右比例完全由 splitter 管理，不再使用 setStretch
-
-    // ========= 在右侧加入 MarkdownEditorWidget =========
+    // ======================== 在右侧加入 MarkdownEditorWidget ========================
 
     // 中间的容器：以后你有多个 widget（编辑器 + 次级预览）也可以都放里面
     QWidget* centerContainer = new QWidget(ui->rightPanel);
@@ -117,19 +83,19 @@ EditorWindow::EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent
     outerHLayout->setContentsMargins(0, 0, 0, 0);
     outerHLayout->setSpacing(0);
 
-    outerHLayout->addStretch();              // 左侧空白
+    outerHLayout->addStretch(); // 左侧空白
     outerHLayout->addWidget(centerContainer);
-    outerHLayout->addStretch();              // 右侧空白
+    outerHLayout->addStretch(); // 右侧空白
 
     // 设置拉伸比例：1 : 8 : 1  => 中间 80%
     outerHLayout->setStretch(0, 1);
     outerHLayout->setStretch(1, 8);
     outerHLayout->setStretch(2, 1);
 
-    // 把这个水平布局塞到 rightLayout 里
     ui->rightLayout->addLayout(outerHLayout);
 
-    // ========= 3. 信号连接 =========
+    // ==================================== 信号连接 ====================================
+
     connect(ui->logoutButton, &QPushButton::clicked,
             this, &EditorWindow::onLogoutClicked);
     connect(ui->updateButton, &QPushButton::clicked,
@@ -146,6 +112,7 @@ EditorWindow::EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent
     connect(m_http, &HttpManager::fetchNoteStructureResult,
             this, &EditorWindow::onFetchResult);
 
+    //  Treeview双击逻辑
     connect(ui->treeView, &QTreeView::doubleClicked,
             this, &EditorWindow::onTreeItemDoubleClicked);
 }
@@ -221,10 +188,10 @@ void EditorWindow::onUpdateClicked()
         }
     }
 
-    // 1) 每次更新前都重新扫描目录 + JSON，重建树并写入 json 文件
+    // 每次更新前都重新扫描目录 + JSON，重建树并写入 json 文件
     initNoteTree(filePath, rootDir);
 
-    // 2) 读取刚刚生成的 json 文件
+    // 读取刚刚生成的 json 文件
     QFile f(filePath);
     if (!f.open(QIODevice::ReadOnly))
     {
@@ -250,7 +217,7 @@ void EditorWindow::onUpdateClicked()
 
     QJsonObject obj = doc.object();
 
-    // 3) 把最新结构上传给后端
+    // 把最新结构上传给后端
     m_http->updateNoteStructure(m_token, obj);
 }
 
@@ -470,16 +437,17 @@ void EditorWindow::onTreeItemDoubleClicked(const QModelIndex& index)
         << ", remoteId =" << remoteId
         << ", fullPath =" << fullPath;
 
+    // 切换编辑器显示
     m_mainEditor->setFilePath(absolutePath);
     m_mainEditor->loadFromFile();
 
-    QMessageBox::information(
-        this,
-        "Open note",
-        QString("id = %1\nremoteId = %2\nfullPath = %3\nabsolutePath = %4")
-        .arg(id)
-        .arg(remoteId)
-        .arg(fullPath)
-        .arg(absolutePath))
-    ;
+    // QMessageBox::information(
+    //     this,
+    //     "Open note",
+    //     QString("id = %1\nremoteId = %2\nfullPath = %3\nabsolutePath = %4")
+    //     .arg(id)
+    //     .arg(remoteId)
+    //     .arg(fullPath)
+    //     .arg(absolutePath))
+    // ;
 }
