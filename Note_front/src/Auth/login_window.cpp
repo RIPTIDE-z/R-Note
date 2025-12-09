@@ -155,7 +155,4 @@ void LoginWindow::onConfigAccepted(const QString& baseUrl,
 
     // 清掉之前的错误提示
     ui->messageLabel->clear();
-
-    // 发出配置更改的信号，由 AppConfig 接收
-    emit configChanged(baseUrl, projectRoot);
 }

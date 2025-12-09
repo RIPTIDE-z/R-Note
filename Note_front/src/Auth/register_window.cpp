@@ -140,6 +140,4 @@ void RegisterWindow::onConfigAccepted(const QString& baseUrl,
 
     // 清掉之前的错误提示
     ui->messageLabel->clear();
-
-    emit configChanged(baseUrl, projectRoot);
 }

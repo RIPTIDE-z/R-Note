@@ -28,9 +28,6 @@ signals:
     void loginSucceeded(const QString& token, const QJsonObject& noteStructure);
     void requestShowRegister();
 
-    void configChanged(const QString& baseUrl,
-        const QString& projectRoot);
-
 private slots:
     void onLoginClicked();
     void onLoginResult(bool ok,

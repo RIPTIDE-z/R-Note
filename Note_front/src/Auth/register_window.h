@@ -28,10 +28,6 @@ protected:
 signals:
     void requestShowLogin();
 
-    // 如果上层（例如 MainWindow）想感知配置变化，还可以用这个信号
-    void configChanged(const QString& baseUrl,
-        const QString& projectRoot);
-
 private slots:
     void onRegisterClicked();
     void onRegisterResult(bool ok, const QString& message);

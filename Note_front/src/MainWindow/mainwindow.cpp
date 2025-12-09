@@ -77,13 +77,22 @@ MainWindow::MainWindow(AppConfig* config, HttpManager* http, NoteStructureManage
             this, [this]() { stacked_->setCurrentWidget(loginPage_); });
 
     connect(loginPage_, &LoginWindow::loginSucceeded,
-            this, [&](const QString& token, const QJsonObject& noteStruct)
-            {
-                editorPage_->setToken(token);
-                // 进入编辑器时放大一点
-                resizeKeepCenter(this, 1440, 900);
-                stacked_->setCurrentWidget(editorPage_);
-            });
+        this,
+        [this, config](const QString& token, const QJsonObject& noteStruct)
+        {
+            editorPage_->setToken(token);
+
+            // 从 AppConfig 取当前 projectRoot
+            const QString projectRoot = config->projectRoot();
+
+            editorPage_->initNoteTree(
+                projectRoot + "/.Note/note_structure.json",
+                projectRoot
+            );
+
+            resizeKeepCenter(this, 1440, 900);
+            stacked_->setCurrentWidget(editorPage_);
+        });
 
     connect(editorPage_, &EditorWindow::logoutSucceeded,
             this, [this]()
@@ -92,16 +101,6 @@ MainWindow::MainWindow(AppConfig* config, HttpManager* http, NoteStructureManage
                 resizeKeepCenter(this, 500, 500);
                 stacked_->setCurrentWidget(loginPage_);
             });
-
-    connect(config, &AppConfig::projectRootChanged,
-        this,
-        [this](const QString& projectRoot)
-        {
-            editorPage_->initNoteTree(
-                projectRoot + "/.Note/note_structure.json",
-                projectRoot
-            );
-        });
 
     connect(config, &AppConfig::baseUrlChanged,
         this, [this, http](const QString& url)

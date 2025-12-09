@@ -25,7 +25,7 @@ MarkdownEditorWidget::MarkdownEditorWidget(QWidget* parent)
 
     m_stack->addWidget(m_editor);   // index 0: 编辑
     m_stack->addWidget(m_preview);  // index 1: 预览
-    m_stack->setCurrentWidget(m_editor);
+    m_stack->setCurrentWidget(m_preview);
 
     QFont monoFont("JetBrains Mono");
     monoFont.setStyleHint(QFont::Monospace);  // 提示是等宽
