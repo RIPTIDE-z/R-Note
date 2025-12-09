@@ -45,4 +45,9 @@
         WHERE id = #{id}
     </update>
 
+    <delete id="deleteById" parameterType="long">
+        DELETE FROM note
+        WHERE id = #{id}
+    </delete>
+
 </mapper>

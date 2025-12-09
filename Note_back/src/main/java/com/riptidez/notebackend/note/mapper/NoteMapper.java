@@ -16,4 +16,6 @@ public interface NoteMapper {
 
     int updateCurrentHistoryId(@Param("id") Long id,
                                @Param("currentHistoryId") Long currentHistoryId);
+
+    int deleteById(@Param("id") Long id);
 }
