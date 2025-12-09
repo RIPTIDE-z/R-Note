@@ -224,6 +224,7 @@ std::unique_ptr<NoteNode> NoteStructureManager::buildFromDirectory(
 
     QString currentPath = parentPath + "/" + node->name;
     node->fullPath = currentPath;
+    node->absolutePath = rootInfo.absoluteFilePath();
 
     // 复用旧 ID / remoteNoteId
     if (existingIndex && existingIndex->contains(currentPath)) {
@@ -276,8 +277,7 @@ std::unique_ptr<NoteNode> NoteStructureManager::updateStructureFromDirAndJson(
     return newRoot;
 }
 
-// 继续在 NoteStructureManager.cpp 中
-
+// 往QStandardItem里填充数据
 static void fillModelRecursive(QStandardItem* parentItem, const NoteNode* node)
 {
     if (!node) return;
@@ -295,6 +295,7 @@ static void fillModelRecursive(QStandardItem* parentItem, const NoteNode* node)
         nameItem->setData(static_cast<qint64>(*node->remoteNoteId), Qt::UserRole + 3);
     }
     nameItem->setData(node->fullPath, Qt::UserRole + 4);
+    nameItem->setData(node->absolutePath, Qt::UserRole + 5);
 
     parentItem->appendRow(nameItem);
 

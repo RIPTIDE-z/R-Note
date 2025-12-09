@@ -129,12 +129,6 @@ EditorWindow::EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent
     // 把这个水平布局塞到 rightLayout 里
     ui->rightLayout->addLayout(outerHLayout);
 
-    // 临时写死 md 文件路径
-    const QString testPath = "D:/桌面/1/test.md";
-    m_mainEditor->setFilePath(testPath);
-    m_mainEditor->loadFromFile();
-
-
     // ========= 3. 信号连接 =========
     connect(ui->logoutButton, &QPushButton::clicked,
             this, &EditorWindow::onLogoutClicked);
@@ -312,7 +306,7 @@ void EditorWindow::onFetchResult(bool ok, const QString& message, const QJsonObj
 
     if (!ok)
     {
-        // 这里可以弹个对话框或状态栏提示
+        // TODO: 弹对话框或状态栏提示
         // showMessage(message);
         return;
     }
@@ -467,6 +461,7 @@ void EditorWindow::onTreeItemDoubleClicked(const QModelIndex& index)
     QString id = index.data(Qt::UserRole + 1).toString();
     QVariant remoteIdVar = index.data(Qt::UserRole + 3);
     QString fullPath = index.data(Qt::UserRole + 4).toString();
+    QString absolutePath = index.data(Qt::UserRole + 5).toString();
 
     qint64 remoteId = remoteIdVar.isValid() ? remoteIdVar.toLongLong() : -1;
 
@@ -475,11 +470,16 @@ void EditorWindow::onTreeItemDoubleClicked(const QModelIndex& index)
         << ", remoteId =" << remoteId
         << ", fullPath =" << fullPath;
 
+    m_mainEditor->setFilePath(absolutePath);
+    m_mainEditor->loadFromFile();
+
     QMessageBox::information(
         this,
         "Open note",
-        QString("id = %1\nremoteId = %2\nfullPath = %3")
+        QString("id = %1\nremoteId = %2\nfullPath = %3\nabsolutePath = %4")
         .arg(id)
         .arg(remoteId)
-        .arg(fullPath));
+        .arg(fullPath)
+        .arg(absolutePath))
+    ;
 }
