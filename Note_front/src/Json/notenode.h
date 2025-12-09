@@ -23,6 +23,8 @@ struct NoteNode
 
     // 从根开始的路径，如 "/root/folder1/a.txt"
     QString fullPath;
+    // 绝对路径
+    QString absolutePath;
 
     // 显式禁止拷贝，允许移动，避免以后有人无意中拷贝 NoteNode
     NoteNode() = default;

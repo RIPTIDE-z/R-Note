@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QGuiApplication>
+#include <QIcon>
 
 #include "mainwindow.h"
 #include "httpmanager.h"
@@ -10,6 +11,10 @@ int main(int argc, char* argv[])
 {
     QGuiApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
     QApplication a(argc, argv);
+
+    // 设置程序Icon
+    QIcon appIcon(":/icon/note_512.png");
+    a.setWindowIcon(appIcon);
 
     // 1. 全局配置（运行时共享）
     AppConfig config;
@@ -22,6 +27,7 @@ int main(int argc, char* argv[])
 
     // 4. 主窗口，拿到这三者的指针
     MainWindow w(&config, &http, &noteMgr);
+    w.setWindowIcon(appIcon);
     w.show();
 
     return a.exec();

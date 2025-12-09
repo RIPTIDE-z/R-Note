@@ -4,8 +4,8 @@ package com.riptidez.notebackend.note.dto;
  * 用于更新/回滚请求的请求体
  */
 public class UpdateNoteRequestDto {
-    /** 0表示更新 1表示回滚 */
-    private Integer mode;
+    /** 0表示更新 1表示回滚 2表示新建*/
+    private Integer code;
     /** 笔记内容 */
     private String content;
     /** 要回滚到的版本 */
@@ -13,12 +13,12 @@ public class UpdateNoteRequestDto {
     /** 更改说明 */
     private String changeSummary;
 
-    public Integer getMode() {
-        return mode;
+    public Integer getCode() {
+        return code;
     }
 
-    public void setMode(Integer mode) {
-        this.mode = mode;
+    public void setCode(Integer code) {
+        this.code = code;
     }
 
     public String getContent() {
@@ -48,7 +48,7 @@ public class UpdateNoteRequestDto {
     @Override
     public String toString() {
         return "UpdateNoteRequestDto{" +
-                "mode=" + mode +
+                "mode=" + code +
                 ", content='" + content + '\'' +
                 ", targetVersion=" + targetVersion +
                 ", changeSummary='" + changeSummary + '\'' +

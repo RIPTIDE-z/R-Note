@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(R-Note LANGUAGES CXX)
+project(R-Note LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -33,5 +33,8 @@ set(QWINDOWKIT_BUILD_DOCUMENTATIONS OFF CACHE BOOL "" FORCE)
 # 添加QWindowkit依赖
 add_subdirectory(external/QWindowKit)
 
-# src
+# 添加md4c依赖
+add_subdirectory(external/md4c)
+
+# src, 内含add_executable
 add_subdirectory(src)

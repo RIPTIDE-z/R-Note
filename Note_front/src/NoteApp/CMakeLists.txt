@@ -1,6 +1,7 @@
 set(APP_SOURCES
     main.cpp
     ${CMAKE_SOURCE_DIR}/resource/resource.qrc
+    ${CMAKE_SOURCE_DIR}/resource/app_icon.rc
 )
 
 qt_add_executable(${PROJECT_NAME}
@@ -16,6 +17,7 @@ target_link_libraries(R-Note
       Qt6::Widgets 
       Qt6::Network
       QWindowKit::Widgets
+      md4c
 )
 
 install(TARGETS R-Note
