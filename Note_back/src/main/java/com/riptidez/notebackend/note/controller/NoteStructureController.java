@@ -4,15 +4,12 @@ import com.riptidez.notebackend.auth.dto.AuthResponseDto;
 import com.riptidez.notebackend.auth.service.AuthService;
 import com.riptidez.notebackend.auth.service.SessionService;
 import com.riptidez.notebackend.exception.ExceptionWithMessage;
-import com.riptidez.notebackend.note.service.NoteService;
 import com.riptidez.notebackend.auth.helper.AuthTokenHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class NoteStructureController {
-    @Autowired
-    private NoteService noteService;
 
     @Autowired
     private SessionService sessionService;
