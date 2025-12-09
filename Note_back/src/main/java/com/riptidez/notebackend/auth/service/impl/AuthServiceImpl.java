@@ -34,7 +34,11 @@ public class AuthServiceImpl implements AuthService {
         user.setUsername(username);
         user.setPasswordHash(passwordHash);
         user.setNoteStructure("{\"version\":1,\"userId\":1,\"root\":{\"id\":\"root\",\"name\":\"root\",\"type\":\"folder\",\"children\":[]}}");
-        userMapper.insert(user);
+        int rows = userMapper.insert(user);
+        if (rows != 1) {
+            log.info("注册失败，无法插入用户");
+            throw new ExceptionWithMessage("注册失败");
+        }
         log.info("注册成功");
 
         return user;
@@ -50,37 +54,5 @@ public class AuthServiceImpl implements AuthService {
         }
         log.info("成功登陆{}", username);
         return user;
-    }
-
-    @Override
-    public User getCurrentUser() {
-        //TODO 从 session/token 拿 currentUser
-        throw new UnsupportedOperationException("TODO");
-    }
-
-    @Override
-    public String getNoteStructure(Long userId) {
-        log.info("尝试获取用户{}的笔记结构", userId);
-        User user = userMapper.getNoteStructureByUserId(userId);
-        if (user == null) {
-            throw new ExceptionWithMessage("用户不存在");
-        }
-        log.info("成功获取用户{}的笔记结构", userId);
-        return user.getNoteStructure();
-    }
-
-    @Override
-    public void updateNoteStructure(Long userId, String noteStructureJson) {
-        log.info("尝试更新用户{}的笔记结构", userId);
-        int n = userMapper.updateNoteStructure(userId, noteStructureJson);
-        if (n == 0) {
-            throw new ExceptionWithMessage("更新笔记结构失败");
-        }
-        log.info("已成功更新用户{}的笔记结构", userId);
-    }
-
-    @Override
-    public User findById(Long id) {
-        return userMapper.findById(id);
     }
 }

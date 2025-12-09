@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonRawValue;
 /**
  * 用于注册/登录请求的响应体
  */
-
 public class AuthResponseDto {
     /** 标识数字，0代表成功 1代表失败 */
     private Integer code;

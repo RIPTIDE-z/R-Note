@@ -1,18 +1,21 @@
 package com.riptidez.notebackend.auth.service;
 
 import com.riptidez.notebackend.auth.entity.User;
-import com.riptidez.notebackend.exception.ExceptionWithMessage;
 
 public interface AuthService {
-    User register(String username, String passwordHash) throws ExceptionWithMessage;
+    /**
+     * 通过用户名和密码哈希注册用户，前端已经对密码进行sha256加密
+     * @param username
+     * @param passwordHash
+     * @return
+     */
+    User register(String username, String passwordHash);
 
+    /**
+     * 通过用户名和密码哈希登录用户
+     * @param username
+     * @param passwordHash
+     * @return
+     */
     User login(String username, String passwordHash);
-
-    User getCurrentUser();
-
-    String getNoteStructure(Long userId);
-
-    void updateNoteStructure(Long userId, String noteStructureJson);
-
-    User findById(Long id);
 }

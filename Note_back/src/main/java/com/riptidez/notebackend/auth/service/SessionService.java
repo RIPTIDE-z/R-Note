@@ -6,7 +6,7 @@ package com.riptidez.notebackend.auth.service;
  * - getUserIdByToken：根据 token 找到对应的 userId
  * - removeSession：登出时删除这个 token
  *
- * 当前实现建议用内存 Map 实现，适合作业和单机开发环境。
+ * 当前用内存 Map 实现
  */
 public interface SessionService {
 
