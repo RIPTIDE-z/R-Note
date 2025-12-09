@@ -19,6 +19,9 @@
 #include <QSplitter>
 #include <QList>
 #include <QDir>
+#include <QLineEdit>
+#include <QMenu>
+#include <QInputDialog>
 
 #include "app_config.h"
 
@@ -45,6 +48,10 @@ EditorWindow::EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent
 
     // 关闭水平滚动条，避免被压窄时横向滚动条闪一下
     ui->treeView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    ui->treeView->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->treeView, &QTreeView::customContextMenuRequested,
+        this, &EditorWindow::onTreeViewContextMenuRequested);
 
     // =============================== 左侧 QSplitter ===============================
 
@@ -412,6 +419,7 @@ void EditorWindow::updateNoteTree(const QString& jsonFilePath,
     ui->treeView->header()->setStretchLastSection(true);
 }
 
+// 双击逻辑
 void EditorWindow::onTreeItemDoubleClicked(const QModelIndex& index)
 {
     if (!index.isValid() || !m_treeModel)
@@ -451,3 +459,272 @@ void EditorWindow::onTreeItemDoubleClicked(const QModelIndex& index)
     //     .arg(absolutePath))
     // ;
 }
+
+// 右键逻辑
+void EditorWindow::onTreeViewContextMenuRequested(const QPoint& pos)
+{
+    if (!m_treeModel)
+        return;
+
+    // 鼠标右键所在的 index
+    QModelIndex index = ui->treeView->indexAt(pos);
+    if (!index.isValid())
+        return;
+
+    QString type = index.data(Qt::UserRole + 2).toString();
+
+    QMenu menu(this);
+
+    if (type == "folder")
+    {
+        QAction* actNewNote = menu.addAction(QStringLiteral("新建笔记"));
+        QAction* actDeleteFolder = menu.addAction(QStringLiteral("删除文件夹"));
+
+        connect(actNewNote, &QAction::triggered, this, [this, index]() {
+            this->createNoteUnderFolder(index);
+            });
+        connect(actDeleteFolder, &QAction::triggered, this, [this, index]() {
+            this->deleteFolder(index);
+            });
+    }
+    else if (type == "note")
+    {
+        QAction* actDelete = menu.addAction(QStringLiteral("删除笔记"));
+        QAction* actUpdate = menu.addAction(QStringLiteral("更新窗口"));
+
+        connect(actDelete, &QAction::triggered, this, [this, index]() {
+            this->deleteNote(index);
+            });
+        connect(actUpdate, &QAction::triggered, this, [this, index]() {
+            this->updateNote(index);
+            });
+    }
+
+    if (menu.actions().isEmpty())
+        return;
+
+    QPoint globalPos = ui->treeView->viewport()->mapToGlobal(pos);
+    menu.exec(globalPos);
+}
+
+// 新建笔记
+void EditorWindow::createNoteUnderFolder(const QModelIndex& index)
+{
+    QString folderPath = index.data(Qt::UserRole + 5).toString();
+    if (folderPath.isEmpty())
+    {
+        qWarning() << "createNoteUnderFolder: folderPath is empty";
+        return;
+    }
+
+    QInputDialog dlg(this);
+    dlg.setWindowTitle(QStringLiteral("新建笔记"));
+    dlg.setLabelText(QStringLiteral("笔记名称（不含扩展名）:"));
+    dlg.setInputMode(QInputDialog::TextInput);
+    dlg.setTextValue(QString());
+
+    // 关键：去掉系统边框
+    dlg.setWindowFlags(dlg.windowFlags() | Qt::FramelessWindowHint);
+
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+
+    QString name = dlg.textValue().trimmed();
+    if (name.isEmpty())
+        return;
+
+    QString fileName = name + ".md";
+    QDir dir(folderPath);
+    QString filePath = dir.filePath(fileName);
+
+    if (QFileInfo::exists(filePath))
+    {
+        // 这里也可以改成无边框 QMessageBox，下一个步骤会教
+        QMessageBox::warning(
+            this,
+            QStringLiteral("文件已存在"),
+            QStringLiteral("同名笔记已存在，请换一个名字。")
+        );
+        return;
+    }
+
+    QFile f(filePath);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::NewOnly | QIODevice::Text))
+    {
+        QMessageBox::warning(
+            this,
+            QStringLiteral("创建失败"),
+            QStringLiteral("无法创建文件: %1\n错误: %2")
+            .arg(filePath, f.errorString())
+        );
+        return;
+    }
+
+    QByteArray initial = QString("# %1\n").arg(name).toUtf8();
+    f.write(initial);
+    f.close();
+
+    if (!m_config)
+    {
+        qWarning() << "createNoteUnderFolder: m_config is null";
+        return;
+    }
+
+    const QString rootDir = m_config->projectRoot();
+    if (rootDir.isEmpty())
+    {
+        qWarning() << "createNoteUnderFolder: projectRoot is empty";
+        return;
+    }
+
+    const QString jsonFile = rootDir + "/.Note/note_structure.json";
+    initNoteTree(jsonFile, rootDir);
+}
+
+// 删除笔记
+void EditorWindow::deleteNote(const QModelIndex& index)
+{
+    QString absolutePath = index.data(Qt::UserRole + 5).toString();
+    QString name = index.data(Qt::DisplayRole).toString();
+
+    if (absolutePath.isEmpty())
+    {
+        qWarning() << "deleteNote: absolutePath is empty";
+        return;
+    }
+
+    QMessageBox box(this);
+    box.setIcon(QMessageBox::Warning);
+    box.setWindowTitle(QStringLiteral("删除笔记"));
+    box.setText(QStringLiteral("确定要删除笔记 \"%1\" 吗？\n此操作会删除本地文件。").arg(name));
+    box.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    box.setDefaultButton(QMessageBox::No);
+
+    // 去掉系统边框
+    box.setWindowFlags(box.windowFlags() | Qt::FramelessWindowHint);
+
+    int ret = box.exec();
+    if (ret != QMessageBox::Yes)
+        return;
+
+    QFile f(absolutePath);
+    if (f.exists())
+    {
+        if (!f.remove())
+        {
+            QMessageBox errBox(this);
+            errBox.setIcon(QMessageBox::Critical);
+            errBox.setWindowTitle(QStringLiteral("删除失败"));
+            errBox.setText(QStringLiteral("无法删除文件: %1\n错误: %2")
+                .arg(absolutePath, f.errorString()));
+            errBox.setWindowFlags(errBox.windowFlags() | Qt::FramelessWindowHint);
+            errBox.exec();
+            return;
+        }
+    }
+
+    if (!m_config)
+    {
+        qWarning() << "deleteNote: m_config is null";
+        return;
+    }
+
+    const QString rootDir = m_config->projectRoot();
+    if (rootDir.isEmpty())
+    {
+        qWarning() << "deleteNote: projectRoot is empty";
+        return;
+    }
+
+    const QString jsonFile = rootDir + "/.Note/note_structure.json";
+    initNoteTree(jsonFile, rootDir);
+}
+
+void EditorWindow::deleteFolder(const QModelIndex& index)
+{
+    QString folderPath = index.data(Qt::UserRole + 5).toString();
+    QString name = index.data(Qt::DisplayRole).toString();
+
+    if (folderPath.isEmpty())
+    {
+        qWarning() << "deleteFolder: folderPath is empty";
+        return;
+    }
+
+    QFileInfo info(folderPath);
+    if (!info.isDir())
+    {
+        qWarning() << "deleteFolder: path is not a directory" << folderPath;
+        return;
+    }
+
+    // 不允许删根目录（项目根）
+    if (m_config && !m_config->projectRoot().isEmpty())
+    {
+        QString rootDir = QDir::cleanPath(m_config->projectRoot());
+        QString target = QDir::cleanPath(folderPath);
+        if (rootDir.compare(target, Qt::CaseInsensitive) == 0)
+        {
+            QMessageBox box(this);
+            box.setIcon(QMessageBox::Warning);
+            box.setWindowTitle(QStringLiteral("禁止操作"));
+            box.setText(QStringLiteral("不能删除项目根目录。"));
+            box.setWindowFlags(box.windowFlags() | Qt::FramelessWindowHint);
+            box.exec();
+            return;
+        }
+    }
+
+    QMessageBox box(this);
+    box.setIcon(QMessageBox::Warning);
+    box.setWindowTitle(QStringLiteral("删除文件夹"));
+    box.setText(QStringLiteral("确定要删除文件夹 \"%1\" 及其内部所有笔记吗？\n此操作会递归删除本地文件。").arg(name));
+    box.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    box.setDefaultButton(QMessageBox::No);
+    box.setWindowFlags(box.windowFlags() | Qt::FramelessWindowHint);
+
+    int ret = box.exec();
+    if (ret != QMessageBox::Yes)
+        return;
+
+    QDir dir(folderPath);
+    if (!dir.removeRecursively())
+    {
+        QMessageBox errBox(this);
+        errBox.setIcon(QMessageBox::Critical);
+        errBox.setWindowTitle(QStringLiteral("删除失败"));
+        errBox.setText(QStringLiteral("无法递归删除文件夹: %1").arg(folderPath));
+        errBox.setWindowFlags(errBox.windowFlags() | Qt::FramelessWindowHint);
+        errBox.exec();
+        return;
+    }
+
+    if (!m_config)
+    {
+        qWarning() << "deleteFolder: m_config is null";
+        return;
+    }
+
+    const QString rootDir = m_config->projectRoot();
+    if (rootDir.isEmpty())
+    {
+        qWarning() << "deleteFolder: projectRoot is empty";
+        return;
+    }
+
+    const QString jsonFile = rootDir + "/.Note/note_structure.json";
+    initNoteTree(jsonFile, rootDir);
+}
+
+
+// TODO:更新笔记历史
+void EditorWindow::updateNote(const QModelIndex& index)
+{
+    Q_UNUSED(index);
+    QMessageBox::information(
+        this,
+        QStringLiteral("更新窗口"),
+        QStringLiteral("更新逻辑暂未实现。")
+    );
+}
+

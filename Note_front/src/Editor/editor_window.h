@@ -46,7 +46,11 @@ private slots:
     void onLogoutClicked();
     void onUpdateClicked();
     void onSyncClicked();
+
+    // Treeview相关
     void onTreeItemDoubleClicked(const QModelIndex& index);
+    // 右键菜单
+    void onTreeViewContextMenuRequested(const QPoint& pos);
     
     // 服务端响应
     void onLogoutResult(bool ok, const QString& message);
@@ -72,4 +76,9 @@ private:
 
     // 新增：右侧主编辑器/预览控件
     MarkdownEditorWidget* m_mainEditor = nullptr;
+
+    void createNoteUnderFolder(const QModelIndex& index);
+    void deleteNote(const QModelIndex& index);
+    void deleteFolder(const QModelIndex& index);
+    void updateNote(const QModelIndex& index);  // TODO:笔记更新
 };
