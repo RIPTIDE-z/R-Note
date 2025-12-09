@@ -16,30 +16,27 @@
     <!--  -->
     <insert id="insert" parameterType="NoteHistory"
             useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO note_history (
-        note_id,
-        version,
-        created_time,
-        content,
-        change_summary
-        ) VALUES (
-        #{noteId},
-        #{version},
-        #{createdTime},
-        #{content},
-        #{changeSummary}
-        )
+        INSERT INTO note_history (note_id,
+                                  version,
+                                  created_time,
+                                  content,
+                                  change_summary)
+        VALUES (#{noteId},
+                #{version},
+                #{createdTime},
+                #{content},
+                #{changeSummary})
     </insert>
 
     <!--  -->
     <select id="findByNoteId" parameterType="long"
             resultMap="NoteHistoryResultMap">
         SELECT id,
-        note_id,
-        version,
-        created_time,
-        content,
-        change_summary
+               note_id,
+               version,
+               created_time,
+               content,
+               change_summary
         FROM note_history
         WHERE note_id = #{noteId}
         ORDER BY version ASC
@@ -48,25 +45,25 @@
     <!--  -->
     <select id="findByNoteIdAndVersion" resultMap="NoteHistoryResultMap">
         SELECT id,
-        note_id,
-        version,
-        created_time,
-        content,
-        change_summary
+               note_id,
+               version,
+               created_time,
+               content,
+               change_summary
         FROM note_history
         WHERE note_id = #{noteId}
-        AND version = #{version}
+          AND version = #{version}
         LIMIT 1
     </select>
 
-    <!--  -->
+    <!-- 找到最新版本 -->
     <select id="findLatestByNoteId" resultMap="NoteHistoryResultMap">
         SELECT id,
-        note_id,
-        version,
-        created_time,
-        content,
-        change_summary
+               note_id,
+               version,
+               created_time,
+               content,
+               change_summary
         FROM note_history
         WHERE note_id = #{noteId}
         ORDER BY version DESC

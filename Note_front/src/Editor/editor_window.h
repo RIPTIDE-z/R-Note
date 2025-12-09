@@ -78,6 +78,7 @@ private:
     MarkdownEditorWidget* m_mainEditor = nullptr;
 
     void createNoteUnderFolder(const QModelIndex& index);
+    void createSubFolder(const QModelIndex& index);
     void deleteNote(const QModelIndex& index);
     void deleteFolder(const QModelIndex& index);
     void updateNote(const QModelIndex& index);  // TODO:笔记更新

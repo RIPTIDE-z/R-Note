@@ -466,22 +466,51 @@ void EditorWindow::onTreeViewContextMenuRequested(const QPoint& pos)
     if (!m_treeModel)
         return;
 
-    // 鼠标右键所在的 index
-    QModelIndex index = ui->treeView->indexAt(pos);
-    if (!index.isValid())
-        return;
-
-    QString type = index.data(Qt::UserRole + 2).toString();
-
     QMenu menu(this);
+
+    // 鼠标所在 index（可能是空白区域）
+    QModelIndex index = ui->treeView->indexAt(pos);
+
+    // ========= 空白区域：针对项目根目录 =========
+    if (!index.isValid())
+    {
+        // 以根节点（第一行）作为目标文件夹
+        if (m_treeModel->rowCount() <= 0)
+            return;
+
+        QModelIndex rootIndex = m_treeModel->index(0, 0);
+        if (!rootIndex.isValid())
+            return;
+
+        QAction* actNewNote = menu.addAction(QStringLiteral("新建笔记"));
+        QAction* actNewFolder = menu.addAction(QStringLiteral("新建文件夹"));
+
+        connect(actNewNote, &QAction::triggered, this, [this, rootIndex]() {
+            this->createNoteUnderFolder(rootIndex);
+            });
+        connect(actNewFolder, &QAction::triggered, this, [this, rootIndex]() {
+            this->createSubFolder(rootIndex);
+            });
+
+        QPoint globalPos = ui->treeView->viewport()->mapToGlobal(pos);
+        menu.exec(globalPos);
+        return;
+    }
+
+    // ========= 点击在某个节点上 =========
+    QString type = index.data(Qt::UserRole + 2).toString();
 
     if (type == "folder")
     {
         QAction* actNewNote = menu.addAction(QStringLiteral("新建笔记"));
+        QAction* actNewSubFolder = menu.addAction(QStringLiteral("新建文件夹"));
         QAction* actDeleteFolder = menu.addAction(QStringLiteral("删除文件夹"));
 
         connect(actNewNote, &QAction::triggered, this, [this, index]() {
             this->createNoteUnderFolder(index);
+            });
+        connect(actNewSubFolder, &QAction::triggered, this, [this, index]() {
+            this->createSubFolder(index);
             });
         connect(actDeleteFolder, &QAction::triggered, this, [this, index]() {
             this->deleteFolder(index);
@@ -522,6 +551,25 @@ void EditorWindow::createNoteUnderFolder(const QModelIndex& index)
     dlg.setLabelText(QStringLiteral("笔记名称（不含扩展名）:"));
     dlg.setInputMode(QInputDialog::TextInput);
     dlg.setTextValue(QString());
+
+    dlg.setStyleSheet(
+        // 对话框整体
+        "QInputDialog {"
+        "    background-color: #201830;"
+        "}"
+        // label 区域
+        "QLabel {"
+        "    background-color: #201830;"
+        "    color: #dddddd;"
+        "}"
+        // 输入框
+        "QLineEdit {"
+        "    background-color: #181020;"
+        "    color: #dddddd;"
+        "    border: 1px solid #444444;"
+        "    border-radius: 4px;"
+        "}"
+    );
 
     // 关键：去掉系统边框
     dlg.setWindowFlags(dlg.windowFlags() | Qt::FramelessWindowHint);
@@ -580,6 +628,94 @@ void EditorWindow::createNoteUnderFolder(const QModelIndex& index)
     const QString jsonFile = rootDir + "/.Note/note_structure.json";
     initNoteTree(jsonFile, rootDir);
 }
+
+// 创建子文件夹
+void EditorWindow::createSubFolder(const QModelIndex& index)
+{
+    QString parentPath = index.data(Qt::UserRole + 5).toString();
+    if (parentPath.isEmpty())
+    {
+        qWarning() << "createSubFolder: parentPath is empty";
+        return;
+    }
+
+    // 无边框输入框
+    QInputDialog dlg(this);
+    dlg.setWindowTitle(QStringLiteral("新建文件夹"));
+    dlg.setLabelText(QStringLiteral("文件夹名称:"));
+    dlg.setInputMode(QInputDialog::TextInput);
+    dlg.setTextValue(QString());
+    dlg.setWindowFlags(dlg.windowFlags() | Qt::FramelessWindowHint);
+
+    dlg.setStyleSheet(
+        // 对话框整体
+        "QInputDialog {"
+        "    background-color: #201830;"
+        "}"
+        // label 区域
+        "QLabel {"
+        "    background-color: #201830;"
+        "    color: #dddddd;"
+        "}"
+        // 输入框
+        "QLineEdit {"
+        "    background-color: #181020;"
+        "    color: #dddddd;"
+        "    border: 1px solid #444444;"
+        "    border-radius: 4px;"
+        "}"
+    );
+
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+
+    QString name = dlg.textValue().trimmed();
+    if (name.isEmpty())
+        return;
+
+    QDir dir(parentPath);
+    QString newFolderPath = dir.filePath(name);
+
+    if (QFileInfo::exists(newFolderPath))
+    {
+        QMessageBox box(this);
+        box.setIcon(QMessageBox::Warning);
+        box.setWindowTitle(QStringLiteral("已存在"));
+        box.setText(QStringLiteral("同名文件夹已存在: %1").arg(name));
+        box.setWindowFlags(box.windowFlags() | Qt::FramelessWindowHint);
+        box.exec();
+        return;
+    }
+
+    if (!dir.mkdir(name))
+    {
+        QMessageBox box(this);
+        box.setIcon(QMessageBox::Critical);
+        box.setWindowTitle(QStringLiteral("创建失败"));
+        box.setText(QStringLiteral("无法创建文件夹: %1").arg(newFolderPath));
+        box.setWindowFlags(box.windowFlags() | Qt::FramelessWindowHint);
+        box.exec();
+        return;
+    }
+
+    // 创建成功后重新构建树 + 更新 json
+    if (!m_config)
+    {
+        qWarning() << "createSubFolder: m_config is null";
+        return;
+    }
+
+    const QString rootDir = m_config->projectRoot();
+    if (rootDir.isEmpty())
+    {
+        qWarning() << "createSubFolder: projectRoot is empty";
+        return;
+    }
+
+    const QString jsonFile = rootDir + "/.Note/note_structure.json";
+    initNoteTree(jsonFile, rootDir);
+}
+
 
 // 删除笔记
 void EditorWindow::deleteNote(const QModelIndex& index)
