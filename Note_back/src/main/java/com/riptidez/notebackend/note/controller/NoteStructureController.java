@@ -1,10 +1,9 @@
 package com.riptidez.notebackend.note.controller;
 
 import com.riptidez.notebackend.auth.dto.AuthResponseDto;
-import com.riptidez.notebackend.auth.service.AuthService;
-import com.riptidez.notebackend.auth.service.SessionService;
 import com.riptidez.notebackend.exception.ExceptionWithMessage;
 import com.riptidez.notebackend.auth.helper.AuthTokenHelper;
+import com.riptidez.notebackend.note.service.NoteStructureService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,23 +11,10 @@ import org.springframework.web.bind.annotation.*;
 public class NoteStructureController {
 
     @Autowired
-    private SessionService sessionService;
+    private NoteStructureService noteStructureService;
 
-    @Autowired
-    private AuthService authService;
     @Autowired
     private AuthTokenHelper authTokenHelper;
-
-    /**
-     * 从 Auth-Token 取得 userId，如果失败则抛业务异常。
-     */
-    private Long requireUserId(String token) {
-        Long userId = sessionService.getUserIdByToken(token);
-        if (userId == null) {
-            throw new RuntimeException("未登录或会话已失效");
-        }
-        return userId;
-    }
 
     @GetMapping("/note-structure")
     public AuthResponseDto getNoteStructure(@RequestHeader("Auth-Token") String token) {
@@ -36,7 +22,7 @@ public class NoteStructureController {
 
         try{
             Long userId = authTokenHelper.requireUserId(token);
-            String structureJson = authService.getNoteStructure(userId);
+            String structureJson = noteStructureService.getNoteStructure(userId);
 
             resp.setCode(0);
             resp.setMessage("成功获取笔记结构");
@@ -61,7 +47,7 @@ public class NoteStructureController {
 
         try{
             Long userId = authTokenHelper.requireUserId(token);
-            authService.updateNoteStructure(userId, noteStructureJson);
+            noteStructureService.updateNoteStructure(userId, noteStructureJson);
 
             resp.setCode(0);
             resp.setMessage("更新结构成功");

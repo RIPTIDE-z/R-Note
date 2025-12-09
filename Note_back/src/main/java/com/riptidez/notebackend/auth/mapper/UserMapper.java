@@ -9,7 +9,7 @@ public interface UserMapper {
     User getHashByUsername(@Param("username") String username);
     User getNoteStructureByUserId(@Param("id") Long id);
 
-    User findById(@Param("id") Long id);
+    User findUserById(@Param("id") Long id);
 
     int insert(User user);
 

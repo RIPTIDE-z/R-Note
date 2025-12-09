@@ -23,7 +23,7 @@ public class SessionServiceImpl implements SessionService {
     private static final Logger log = LoggerFactory.getLogger(SessionServiceImpl.class);
 
     /**
-     * token -> userId
+     * 存储会话的 map:token -> userId
      */
     private final Map<String, Long> sessions = new ConcurrentHashMap<>();
 

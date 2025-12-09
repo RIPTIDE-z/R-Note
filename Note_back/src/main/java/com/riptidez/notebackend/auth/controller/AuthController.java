@@ -10,43 +10,6 @@ import com.riptidez.notebackend.exception.ExceptionWithMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * 用户认证相关接口。
- *
- * Base URL: /auth
- *
- * 接口列表：
- * POST /auth/register
- *   - 功能：用户注册
- *   - 请求体：AuthRequestDto { username, password }
- *   - 响应：AuthResponseDto {
- *       code: 0|1,
- *       message: string,
- *       token: null,
- *       structure: null
- *     }
- *
- * POST /auth/login
- *   - 功能：用户登录
- *   - 请求体：AuthRequestDto { username, password }
- *   - 响应：AuthResponseDto {
- *       code: 0|1,
- *       message: string,
- *       token: string|null,
- *       structure: string|null
- *     }
- *
- * POST /auth/logout
- *   - 功能：用户登出
- *   - 认证：请求头 Auth-Token:
- *   - 响应：AuthResponseDto {
- *       code: 0|1,
- *       message: string,
- *       token: null,
- *       structure: null
- *     }
- * </pre>
- */
 @RestController
 @RequestMapping("auth")
 public class AuthController {
@@ -125,7 +88,8 @@ public class AuthController {
         AuthResponseDto resp = new AuthResponseDto();
 
         try {
-            Long userId = authTokenHelper.requireUserId(token);
+            // 只需要检查token是否存在，不需要获取user
+            authTokenHelper.requireUserId(token);
             sessionService.removeSession(token);
 
             resp.setResp(

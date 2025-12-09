@@ -17,7 +17,9 @@ public class AuthTokenHelper {
     }
 
     /**
-     * 从 Auth-Token 取得 userId，如果失败则抛异常。
+     * 从 Auth-Token 取得 userId，如果失败则抛异常
+     * @param token
+     * @return userId
      */
     public Long requireUserId(String token) {
         log.info("正在验证token");

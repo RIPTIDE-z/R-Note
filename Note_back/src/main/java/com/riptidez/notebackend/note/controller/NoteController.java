@@ -16,8 +16,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/notes")
 public class NoteController {
-    private final static Logger log = LoggerFactory.getLogger(NoteController.class);
-
     @Autowired
     private NoteService noteHistoryService;
 
@@ -37,7 +35,7 @@ public class NoteController {
     }
 
     // 获取指定笔记的指定版本的内容
-    @GetMapping("/{noteId}/histories/{version}")
+    @GetMapping("/{noteId}/{version}")
     public NoteHistory getHistory(@RequestHeader("Auth-Token") String token,
                                   @PathVariable Long noteId,
                                   @PathVariable Integer version) {
@@ -46,7 +44,7 @@ public class NoteController {
     }
 
     // 对未同步笔记进行新建，对已同步的笔记进行更新和回滚
-    @PostMapping("/{noteId}/histories")
+    @PostMapping("/{noteId}")
     public UpdateNoteResponseDto updateNote(@RequestHeader("Auth-Token") String token,
                                             @PathVariable(required = false) Long noteId,
                                             @RequestBody UpdateNoteRequestDto dto) {

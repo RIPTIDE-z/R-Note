@@ -81,10 +81,6 @@ public class NoteServiceImpl implements NoteService {
 
         // 2. 创建第一条历史记录 version=1
         NoteHistory history = new NoteHistory();
-        if (history == null) {
-            log.info("为用户{}的笔记创建历史失败", userId);
-            throw new ExceptionWithMessage("创建历史失败");
-        }
         history.setNoteId(note.getId());
         history.setVersion(1);
         history.setCreatedTime(LocalDateTime.now());
@@ -94,11 +90,19 @@ public class NoteServiceImpl implements NoteService {
                         ? changeSummary
                         : "note init"
         );
-        noteHistoryMapper.insert(history);
+        int rows_1 = noteHistoryMapper.insert(history);
+        if (rows_1 == 0) {
+            log.info("为用户{}新建的笔记{}创建历史失败，无法插入历史", userId, note.getId());
+            throw new ExceptionWithMessage("插入历史失败");
+        }
         log.info("为用户{}新建的笔记{}创建历史成功", userId, note.getId());
 
         // 3. 更新 Note.current_history_id
-        noteMapper.updateCurrentHistoryId(note.getId(), history.getId());
+        int rows_2 = noteMapper.updateCurrentHistoryId(note.getId(), history.getId());
+        if  (rows_2 != 1) {
+            log.info("为用户{}新建的笔记{}创建历史失败，无法更新当前历史版本", userId, note.getId());
+            throw new ExceptionWithMessage("插入历史失败");
+        }
         log.info("为用户{}新建的笔记{}更新CurrentHistoryId成功", userId, note.getId());
 
         return history;
@@ -106,15 +110,11 @@ public class NoteServiceImpl implements NoteService {
 
     @Override
     @Transactional
-    public NoteHistory updateNote(Long noteId,
-                                   Long userId,
-                                   String content,
-                                   String changeSummary) {
+    public void updateNote(Long noteId,
+                           Long userId,
+                           String content,
+                           String changeSummary) {
         log.info("尝试更新用户{}的笔记{}", userId, noteId);
-        if (noteId == null) {
-            log.info("更新用户{}的笔记{}失败，noteId为空", userId, noteId);
-            throw new ExceptionWithMessage("noteId 不能为空");
-        }
         if (content == null) {
             log.info("更新用户{}的笔记{}失败，笔记内容为空", userId, noteId);
             throw new ExceptionWithMessage("更新笔记 content 不能为空");
@@ -137,10 +137,6 @@ public class NoteServiceImpl implements NoteService {
 
         log.info("已找到用户{}的笔记{}的最新版本，尝试创建新版本", userId, noteId);
         NoteHistory newHistory = new NoteHistory();
-        if (newHistory == null) {
-            log.info("更新用户{}的笔记{}失败，无法创建新历史", userId, noteId);
-            throw new ExceptionWithMessage("无法创建新历史");
-        }
         newHistory.setNoteId(noteId);
         newHistory.setVersion(newVersion);
         newHistory.setCreatedTime(LocalDateTime.now());
@@ -151,21 +147,28 @@ public class NoteServiceImpl implements NoteService {
                         : ("更新到版本 " + newVersion)
         );
         log.info("成功为用户{}的笔记{}创建新历史，尝试插入数据", userId, noteId);
-        noteHistoryMapper.insert(newHistory);
+        int rows_1 = noteHistoryMapper.insert(newHistory);
+        if (rows_1 == 0) {
+            log.info("为用户{}的笔记{}创建新历史失败，无法插入历史", userId, note.getId());
+            throw new ExceptionWithMessage("更新笔记失败");
+        }
 
         // 更新 Note.current_history_id
-        noteMapper.updateCurrentHistoryId(noteId, newHistory.getId());
+        int rows_2 = noteMapper.updateCurrentHistoryId(noteId, newHistory.getId());
+        if  (rows_2 != 1) {
+            log.info("为用户{}的笔记{}创建新历史失败，无法更新当前历史版本", userId, note.getId());
+            throw new ExceptionWithMessage("更新笔记失败");
+        }
 
         log.info("成功更新用户{}的笔记{}", userId, noteId);
 
-        return newHistory;
     }
 
     @Override
-    public NoteHistory rollbackNote(Long noteId,
-                                     Integer targetVersion,
-                                     Long userId,
-                                     String changeSummary) {
+    public void rollbackNote(Long noteId,
+                             Integer targetVersion,
+                             Long userId,
+                             String changeSummary) {
         log.info("尝试回滚用户{}的笔记{}到版本{}", userId, noteId, targetVersion);
         if (noteId == null || targetVersion == null) {
             log.info("回滚用户{}的笔记{}到版本{}失败，noteId / version 不能为空", userId, noteId, targetVersion);
@@ -197,10 +200,6 @@ public class NoteServiceImpl implements NoteService {
         log.info("已找到用户{}的笔记{}的最新版本，尝试创建新版本", userId, noteId);
         // 用旧内容创建一个新版本
         NoteHistory newHistory = new NoteHistory();
-        if (newHistory == null) {
-            log.info("回滚用户{}的笔记{}失败，无法创建新历史", userId, noteId);
-            throw new ExceptionWithMessage("无法创建新历史");
-        }
         newHistory.setNoteId(noteId);
         newHistory.setVersion(newVersion);
         newHistory.setCreatedTime(LocalDateTime.now());
@@ -211,12 +210,19 @@ public class NoteServiceImpl implements NoteService {
                         : ("回滚到版本 " + targetVersion)
         );
         log.info("成功为用户{}的笔记{}创建新历史，尝试插入数据", userId, noteId);
-        noteHistoryMapper.insert(newHistory);
+        int rows_1 = noteHistoryMapper.insert(newHistory);
+        if (rows_1 == 0) {
+            log.info("为用户{}的笔记{}创建新历史，无法插入历史", userId, note.getId());
+            throw new ExceptionWithMessage("回滚失败");
+        }
 
         // 更新 Note.current_history_id
-        noteMapper.updateCurrentHistoryId(noteId, newHistory.getId());
+        int rows_2 = noteMapper.updateCurrentHistoryId(noteId, newHistory.getId());
+        if  (rows_2 != 1) {
+            log.info("为用户{}的笔记{}创建新历史失败，无法更新当前历史版本", userId, note.getId());
+            throw new ExceptionWithMessage("回滚失败");
+        }
         log.info("成功回滚用户{}的笔记{}到版本{}，新的版本号为{}", userId, noteId, targetVersion, newHistory.getId());
 
-        return newHistory;
     }
 }
