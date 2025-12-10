@@ -225,4 +225,33 @@ public class NoteServiceImpl implements NoteService {
         log.info("成功回滚用户{}的笔记{}到版本{}，新的版本号为{}", userId, noteId, targetVersion, newHistory.getId());
 
     }
+    @Override
+    @Transactional
+    public void deleteNote(Long noteId, Long userId) {
+        log.info("尝试删除用户{}的笔记{}", userId, noteId);
+
+        if (noteId == null) {
+            log.info("删除用户{}的笔记{}失败，noteId 为空", userId, noteId);
+            throw new ExceptionWithMessage("noteId 不能为空");
+        }
+
+        // 1. 校验笔记归属与权限
+        Note note = noteMapper.findById(noteId);
+        if (note == null || !note.getUserId().equals(userId)) {
+            log.info("删除用户{}的笔记{}失败，笔记不存在或无权限", userId, noteId);
+            throw new ExceptionWithMessage("笔记不存在或无权限");
+        }
+
+        log.info("已找到用户{}的笔记{}，准备执行删除", userId, noteId);
+
+        // 2. 删除 Note，本身依赖数据库外键级联删除 NoteHistory 记录
+        int rows = noteMapper.deleteById(noteId);
+        if (rows != 1) {
+            log.info("删除用户{}的笔记{}失败，受影响行数={}", userId, noteId, rows);
+            throw new ExceptionWithMessage("删除笔记失败");
+        }
+
+        log.info("成功删除用户{}的笔记{}", userId, noteId);
+    }
+
 }
