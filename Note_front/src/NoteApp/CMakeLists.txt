@@ -21,4 +21,4 @@ target_link_libraries(R-Note
 )
 
 install(TARGETS R-Note
-        RUNTIME DESTINATION .)
+        RUNTIME DESTINATION $<CONFIG>)
