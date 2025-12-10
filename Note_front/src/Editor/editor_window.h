@@ -54,8 +54,8 @@ private slots:
     
     // 服务端响应
     void onLogoutResult(bool ok, const QString& message);
-    void onUpdateResult(bool ok, const QString& message);
-    void onFetchResult(bool ok, const QString& message, const QJsonObject& noteStruct);
+    void onUpdateNoteStructureResult(bool ok, const QString& message);
+    void onFetchNoteStructureResult(bool ok, const QString& message, const QJsonObject& noteStruct);
     void onNetworkError(const QString& error);
     
 

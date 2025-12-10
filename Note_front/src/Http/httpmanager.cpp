@@ -10,6 +10,7 @@ HttpManager::HttpManager(QObject* parent)
     : QObject(parent)
     , m_baseUrl("http://127.0.0.1:8080/api")   // 可以被 Config 覆盖
 {
+    // 将onReplyFinished连接，请求结束会进入其中处理
     connect(&m_manager, &QNetworkAccessManager::finished,
         this, &HttpManager::onReplyFinished);
 }
@@ -34,9 +35,10 @@ void HttpManager::registerUser(const QString& username,
     body["username"] = username;
     body["passwordHash"] = HashEncrypt(password);
 
-    // 创建响应且指定响应类型
+    // post发出请求并把响应存入reply
     QNetworkReply* reply =
         m_manager.post(request, QJsonDocument(body).toJson());
+    // 指定reply的类型，以便onReplyFinished辨别
     reply->setProperty("requestType", "register");
 }
 
@@ -67,6 +69,26 @@ void HttpManager::logout(const QString& token)
 
     QNetworkReply* reply = m_manager.post(request, QByteArray());
     reply->setProperty("requestType", "logout");
+}
+
+// DEL /notes/{noteId}
+void HttpManager::deleteNote(const QString& token, const int noteId)
+{
+}
+
+// DEL /notes/{noteId}
+void HttpManager::updateNote(const QString& token, const int noteId, const int code)
+{
+}
+
+// GET /notes/{noteId}/{version}
+void HttpManager::getNoteByVersion(const QString& token, const int noteId, const int version)
+{
+}
+
+// GET /notes/{noteId}/histories
+void HttpManager::getHistoryList(const QString& token, const int noteId)
+{
 }
 
 // GET /note-structure
@@ -142,7 +164,7 @@ void HttpManager::onReplyFinished(QNetworkReply* reply)
 
     QJsonObject obj = doc.object();
 
-    // 根据响应类型调用对应的响应处理函数
+    // 根据响应类型调对应的响应处理函数
     if (reqType == "login") {
         handleLoginResponse(obj);
     }
@@ -151,6 +173,18 @@ void HttpManager::onReplyFinished(QNetworkReply* reply)
     }
     else if (reqType == "logout") {
         handleLogoutResponse(obj);
+    }
+    else if (reqType == "deleteNode") {
+        handleDeleteNoteResponse(obj);
+    }
+    else if (reqType == "updateNote") {
+        handleUpdateNoteResponse(obj);
+    }
+    else if (reqType == "getNoteByVersion") {
+        handleGetNoteByVersionResponse(obj);
+    }
+    else if (reqType == "getHostoryList") {
+        handleGetHistoryListResponset(obj);
     }
     else if (reqType == "fetchNoteStructure") {
         handleFetchNoteStructureResponse(obj);
@@ -179,6 +213,7 @@ void HttpManager::handleLoginResponse(const QJsonObject& obj)
     const QJsonObject noteStruct =
         obj.value("note_structure").toObject();   // 允许为空
 
+    // 使用信号将处理完成后的数据发出去，对应
     emit loginResult(true, msg, token, noteStruct);
 }
 
@@ -263,5 +298,21 @@ void HttpManager::handleUpdateNoteStructureResponse(const QJsonObject& obj)
     const QString msg = obj.value("message").toString();
 
     emit noteStructureUpdated(code == 0, msg);
+}
+
+void HttpManager::handleDeleteNoteResponse(const QJsonObject& obj)
+{
+}
+
+void HttpManager::handleUpdateNoteResponse(const QJsonObject& obj)
+{
+}
+
+void HttpManager::handleGetNoteByVersionResponse(const QJsonObject& obj)
+{
+}
+
+void HttpManager::handleGetHistoryListResponset(const QJsonObject& obj)
+{
 }
 

@@ -115,9 +115,9 @@ EditorWindow::EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent
     connect(m_http, &HttpManager::networkError,
             this, &EditorWindow::onNetworkError);
     connect(m_http, &HttpManager::updateNoteStructureResult,
-            this, &EditorWindow::onUpdateResult);
+            this, &EditorWindow::onUpdateNoteStructureResult);
     connect(m_http, &HttpManager::fetchNoteStructureResult,
-            this, &EditorWindow::onFetchResult);
+            this, &EditorWindow::onFetchNoteStructureResult);
 
     //  Treeview双击逻辑
     connect(ui->treeView, &QTreeView::doubleClicked,
@@ -264,17 +264,17 @@ void EditorWindow::onLogoutResult(bool ok, const QString& message)
     emit logoutSucceeded();
 }
 
-void EditorWindow::onUpdateResult(bool ok, const QString& message)
+void EditorWindow::onUpdateNoteStructureResult(bool ok, const QString& message)
 {
     if (!ok)
     {
-        QMessageBox::warning(this, "更新失败", message);
+        QMessageBox::warning(this, "更新笔记结构失败", message);
         return;
     }
-    QMessageBox::information(this, "更新成功", message);
+    QMessageBox::information(this, "更新笔记结构成功", message);
 }
 
-void EditorWindow::onFetchResult(bool ok, const QString& message, const QJsonObject& noteStruct)
+void EditorWindow::onFetchNoteStructureResult(bool ok, const QString& message, const QJsonObject& noteStruct)
 {
     qDebug() << "fetch note structure result:" << ok << message;
 
@@ -287,14 +287,14 @@ void EditorWindow::onFetchResult(bool ok, const QString& message, const QJsonObj
 
     if (!m_config)
     {
-        qDebug() << "Config is null in onFetchResult";
+        qDebug() << "Config is null in onFetchNoteStructureResult";
         return;
     }
 
     const QString rootDir = m_config->projectRoot();
     if (rootDir.isEmpty())
     {
-        qDebug() << "projectRoot is empty in onFetchResult";
+        qDebug() << "projectRoot is empty in onFetchNoteStructureResult";
         return;
     }
 

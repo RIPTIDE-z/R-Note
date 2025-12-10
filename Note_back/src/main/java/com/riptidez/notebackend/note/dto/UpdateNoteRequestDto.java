@@ -6,7 +6,7 @@ package com.riptidez.notebackend.note.dto;
 public class UpdateNoteRequestDto {
     /** 0表示更新 1表示回滚 2表示新建*/
     private Integer code;
-    /** 笔记内容 */
+    /** 如果要更新笔记，笔记的内容 */
     private String content;
     /** 要回滚到的版本 */
     private Integer targetVersion;

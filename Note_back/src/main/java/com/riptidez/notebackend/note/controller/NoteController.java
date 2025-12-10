@@ -22,7 +22,6 @@ public class NoteController {
     @Autowired
     private AuthTokenHelper authTokenHelper;
 
-    // TODO: DEL /{noteId}
     // 完全删除一个笔记，包括历史版本
     // 注意Note和NoteHistory表创建时自带的删除约束
     @DeleteMapping("/{noteId}")

@@ -16,32 +16,34 @@
 ### 1.1 数据库配置说明
 
 1. 服务端需要安装MySQL创建 `auth_db` `note_db`两个数据库并创建管理员用户(开发环境也可全使用root进行测试)
-    - 创建脚本位于 [sql脚本](./Note_back/src/main/resources/sql)
-    - 在root运行 `auth_db_init.sql`  `note_db_init.sql`
-    - 在root运行 `admin_init.sql`，注意 **配置自己的密码**
-        ```sql
-        CREATE USER IF NOT EXISTS 'auth_admin'@'localhost'
-            IDENTIFIED BY '你的密码';
+   - 创建脚本位于 [sql脚本](./Note_back/src/main/resources/sql)
+   - 在root运行 `auth_db_init.sql`  `note_db_init.sql`
+   - 在root运行 `admin_init.sql`，注意 **配置自己的密码**
+     ```sql
+     CREATE USER IF NOT EXISTS 'auth_admin'@'localhost'
+         IDENTIFIED BY '你的密码';
 
-        CREATE USER IF NOT EXISTS 'note_admin'@'localhost'
-            IDENTIFIED BY '你的密码';
-        ```
+     CREATE USER IF NOT EXISTS 'note_admin'@'localhost'
+         IDENTIFIED BY '你的密码';
+     ```
 2. 数据库连接所需用户密码配置方式为 `application.yml` 引入 `db_credential.yml` 文件，具体信息均在其中配置
-    - 请自行根据 `db_credential_example.yml` 创建 `db_credential.yml` 并填写信息
-        ```yml
-        spring:
-          config:
-              import: "classpath:db_credential.yml"
-        ```
-        ```yml
-        auth_db:
-          username:
-          password:
+   - 请自行根据 `db_credential_example.yml` 创建 `db_credential.yml` 并填写信息
 
-        note_db:
-          username:
-          password:
-        ```
+     ```yml
+     spring:
+       config:
+           import: "classpath:db_credential.yml"
+     ```
+
+     ```yml
+     auth_db:
+       username:
+       password:
+
+     note_db:
+       username:
+       password:
+     ```
 
 ---
 
@@ -60,29 +62,29 @@
 
 ## 2.1 后端部署
 
-1. 在`application.yml`中使用`optional:file:config/db_credential.yml`
-2. 使用`mvn package ` 打包得到jar包
+1. 在 `application.yml`中使用 `optional:file:config/db_credential.yml`
+2. 使用 `mvn package ` 打包得到jar包
 3. 在所需部署的服务端设备上按照数据库配置配置两个数据库
-4. 在jar所在的目录下建立`config`文件夹并在其中新建`db_credential.yml`，在其中配置数据库用户信息
+4. 在jar所在的目录下建立 `config`文件夹并在其中新建 `db_credential.yml`，在其中配置数据库用户信息
 5. 运行 `java -jar ./note-backend-0.4.jar`(注意具体的jar包名称)
 6. 看到类似以下信息说明启动成功
-    ```
-    Thanks for using Atomikos! This installation is not registered yet. 
-    REGISTER FOR FREE at http://www.atomikos.com/Main/RegisterYourDownload and receive:
-    - tips & advice 
-    - working demos 
-    - access to the full documentation 
-    - special exclusive bonus offers not available to others 
-    - everything you need to get the most out of using Atomikos!
-    ========================================
-    ✅ 笔记后端系统启动成功！
-    ========================================
-    ```
-7. 此时可访问`http://localhost:8080/api/druid/`来访问druid监控界面进一步验证系统运行
-    ![](image/druid_monitor.png)
-    ![](image/druid_monitor_datasource.png)
-8. 若部署在远端服务器，只需在客户端配置页面设定`baseurl`为`http://[你的域名或公网ip]:[你的端口]`
-    ![](image/baseurl_config.png)
+   ```
+   Thanks for using Atomikos! This installation is not registered yet. 
+   REGISTER FOR FREE at http://www.atomikos.com/Main/RegisterYourDownload and receive:
+   - tips & advice 
+   - working demos 
+   - access to the full documentation 
+   - special exclusive bonus offers not available to others 
+   - everything you need to get the most out of using Atomikos!
+   ========================================
+   ✅ 笔记后端系统启动成功！
+   ========================================
+   ```
+7. 此时可访问 `http://localhost:8080/api/druid/`来访问druid监控界面进一步验证系统运行
+   ![img](image/druid_monitor.png)
+   ![img](image/druid_monitor_datasource.png)
+8. 若部署在远端服务器，只需在客户端配置页面设定 `baseurl`为 `http://[你的域名或公网ip]:[你的端口]/api`
+   ![img](image/baseurl_config.png)
 
 ---
 
@@ -90,33 +92,32 @@
 
 > 若想打包为windows安装程序，需要下载 [NSIS](https://nsis.sourceforge.io/Main_Page) 进行打包
 
-1. 选定启动项为`R-Note.exe(安装)`并运行
-    ![](image/vs_install.png)
-    默认安装目录位于 `bin/Release` 或 `bin/Debug`
+1. 选定启动项为 `R-Note.exe(安装)`并运行
+   ![](image/vs_install.png)
+   默认安装目录位于 `bin/Release` 或 `bin/Debug`
 2. 若不需要打包为安装包，安装目录下的exe已经可以作为程序使用和分发
 3. 若要打包为安装包，则需要运行 [installer.nsi](./Note_front/installer/installer.nsi)
-    - `nsi`文件中的 `SOURCE_DIR` 配置项表明了需要打包进安装程序的所有文件的存放目录，默认为`"..\bin\Release"` ，若想更改打包路径请自行修改
-4. 在`installer`文件夹下运行`makensis ./installer.nsi`
-    ![](image/nsis.png)
-5. 运行成功后生成的`R-Note_Setup.exe`即为安装程序
-
+   - `nsi`文件中的 `SOURCE_DIR` 配置项表明了需要打包进安装程序的所有文件的存放目录，默认为 `"..\bin\Release"` ，若想更改打包路径请自行修改
+4. 在 `installer`文件夹下运行 `makensis ./installer.nsi`
+   ![](image/nsis.png)
+5. 运行成功后生成的 `R-Note_Setup.exe`即为安装程序
 
 ---
 
 # 3. 接口测试记录
 
-| 接口                       |   状态   | 记录                    |
-| -------------------------- | :------: | ----------------------- |
-| 用户注册                   | 初步验证 | 12.3 初步验证接口可行性 |
-| 用户登录                   | 初步验证 | 12.3 初步验证接口可行性 |
-| 用户退出登录               | 初步验证 | 12.3 初步验证接口可行性 |
-| 获取指定笔记的指定版本内容 |  初步验证  |  12.9 初步验证接口可行性  |
-|        删除指定笔记        |  初步验证  |  12.10 初步验证接口可行性                       |
-| 获取指定笔记的历史列表     |  初步验证  | 12.9 初步验证接口可行性<br>响应返回处理需要进一步细化 |
-| 查看指定版本内容           |  初步验证  | 12.9 初步验证接口可行性<br>响应返回处理需要进一步细化  |
-| 新建/更新/回滚笔记         |  初步验证 | 12.9 初步验证三种功能可行性  |
-| 获取笔记结构               | 初步验证 | 12.6 初步验证接口可行性 |
-| 更新笔记结构               | 初步验证 | 12.6 初步验证接口可行性 |
+| 接口                       |   状态   | 记录                                                      |
+| -------------------------- | :------: | --------------------------------------------------------- |
+| 用户注册                   | 初步验证 | 12.3 初步验证接口可行性                                   |
+| 用户登录                   | 初步验证 | 12.3 初步验证接口可行性                                   |
+| 用户退出登录               | 初步验证 | 12.3 初步验证接口可行性                                   |
+| 获取指定笔记的指定版本内容 | 初步验证 | 12.9 初步验证接口可行性                                   |
+| 删除指定笔记               | 初步验证 | 12.10 初步验证接口可行性                                  |
+| 获取指定笔记的历史列表     | 初步验证 | 12.9 初步验证接口可行性`<br>`响应返回处理需要进一步细化 |
+| 查看指定版本内容           | 初步验证 | 12.9 初步验证接口可行性`<br>`响应返回处理需要进一步细化 |
+| 新建/更新/回滚笔记         | 初步验证 | 12.9 初步验证三种功能可行性                               |
+| 获取笔记结构               | 初步验证 | 12.6 初步验证接口可行性                                   |
+| 更新笔记结构               | 初步验证 | 12.6 初步验证接口可行性                                   |
 
 ---
 
