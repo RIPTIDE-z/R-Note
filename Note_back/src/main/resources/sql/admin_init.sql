@@ -26,8 +26,7 @@ GRANT
         ALTER ROUTINE,
         EXECUTE,
         REFERENCES,
-        TRIGGER,
-        XA_RECOVER_ADMIN
+        TRIGGER
         ON auth_db.*
     TO 'auth_admin'@'localhost';
 
@@ -51,8 +50,7 @@ GRANT
         ALTER ROUTINE,
         EXECUTE,
         REFERENCES,
-        TRIGGER,
-        XA_RECOVER_ADMIN
+        TRIGGER
         ON note_db.*
     TO 'note_admin'@'localhost';
 
