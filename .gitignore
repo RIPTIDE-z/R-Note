@@ -11,5 +11,6 @@ Note_back/src/main/resources/config/db_credential.yml
 /Note_front/bin/
 Note_front/Folder.DotSettings.user
 Note_front/CMakeUserPresets.json
+Note_front/installer/R-Note_Setup.exe
 
 *.aps
