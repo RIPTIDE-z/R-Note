@@ -25,6 +25,17 @@ public class NoteController {
     // TODO: DEL /{noteId}
     // 完全删除一个笔记，包括历史版本
     // 注意Note和NoteHistory表创建时自带的删除约束
+    @DeleteMapping("/{noteId}")
+    public UpdateNoteResponseDto deleteNote(@RequestHeader("Auth-Token") String token,
+                                            @PathVariable Long noteId) {
+        Long userId = authTokenHelper.requireUserId(token);
+        try {
+            noteHistoryService.deleteNote(noteId, userId);
+            return UpdateNoteResponseDto.success("笔记删除成功", null);
+        } catch (ExceptionWithMessage e) {
+            return UpdateNoteResponseDto.fail(e.getMessage(), null);
+        }
+    }
 
     // 获取不带实际内容的笔记历史列表，用于创建历史版本大纲
     @GetMapping("/{noteId}/histories")
