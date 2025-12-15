@@ -35,7 +35,7 @@ public class NoteServiceImpl implements NoteService {
             throw new ExceptionWithMessage("笔记不存在或无权限");
         }
         log.info("成功获取用户{}的笔记{}的历史列表", userId, noteId);
-        return noteHistoryMapper.getNoteHistoryWithoutContentListByNoteId(noteId);
+        return noteHistoryMapper.getNoteHistoryListByNoteId(noteId);
     }
 
     @Override

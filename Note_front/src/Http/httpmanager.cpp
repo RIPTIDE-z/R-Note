@@ -184,7 +184,7 @@ void HttpManager::onReplyFinished(QNetworkReply* reply)
         handleGetNoteByVersionResponse(obj);
     }
     else if (reqType == "getHostoryList") {
-        handleGetHistoryListResponset(obj);
+        handleGetHistoryListResponse(obj);
     }
     else if (reqType == "fetchNoteStructure") {
         handleFetchNoteStructureResponse(obj);
@@ -297,7 +297,7 @@ void HttpManager::handleUpdateNoteStructureResponse(const QJsonObject& obj)
     const int code = obj.value("code").toInt(1);
     const QString msg = obj.value("message").toString();
 
-    emit noteStructureUpdated(code == 0, msg);
+    emit updateNoteStructureResult(code == 0, msg);
 }
 
 void HttpManager::handleDeleteNoteResponse(const QJsonObject& obj)
@@ -312,7 +312,7 @@ void HttpManager::handleGetNoteByVersionResponse(const QJsonObject& obj)
 {
 }
 
-void HttpManager::handleGetHistoryListResponset(const QJsonObject& obj)
+void HttpManager::handleGetHistoryListResponse(const QJsonObject& obj)
 {
 }
 

@@ -1,6 +1,5 @@
 package com.riptidez.notebackend.note.dto;
 
-import com.riptidez.notebackend.note.entity.Note;
 import com.riptidez.notebackend.note.entity.NoteHistory;
 
 import java.util.List;

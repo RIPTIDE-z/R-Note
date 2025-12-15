@@ -91,7 +91,7 @@ private:
     void handleDeleteNoteResponse(const QJsonObject& obj);
     void handleUpdateNoteResponse(const QJsonObject& obj);
     void handleGetNoteByVersionResponse(const QJsonObject& obj);
-    void handleGetHistoryListResponset(const QJsonObject& obj);
+    void handleGetHistoryListResponse(const QJsonObject& obj);
 
 private:
     QNetworkAccessManager m_manager;

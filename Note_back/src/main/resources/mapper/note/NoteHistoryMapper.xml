@@ -13,18 +13,8 @@
         <result property="changeSummary" column="change_summary"/>
     </resultMap>
 
-    <!-- 映射 不带content的NoteHistory -->
-    <resultMap id="NoteHistoryWithoutContentResultMap" type="NoteHistory">
-        <id property="id"                column="id"/>
-        <result property="noteId"        column="note_id"/>
-        <result property="version"       column="version"/>
-        <result property="createdTime"   column="created_time"/>
-        <result property="changeSummary" column="change_summary"/>
-    </resultMap>
-
     <!-- 插入新历史 -->
-    <insert id="insert" parameterType="NoteHistory"
-            useGeneratedKeys="true" keyProperty="id">
+    <insert id="insert" parameterType="NoteHistory" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO note_history (note_id,
                                   version,
                                   created_time,
@@ -38,8 +28,7 @@
     </insert>
 
     <!-- 获取不带内容的笔记历史列表 -->
-    <select id="getNoteHistoryWithoutContentListByNoteId" parameterType="long"
-            resultMap="NoteHistoryWithoutContentResultMap">
+    <select id="getNoteHistoryListByNoteId" resultMap="NoteHistoryResultMap">
         SELECT id,
                note_id,
                version,
