@@ -54,6 +54,12 @@ private slots:
     
     // 服务端响应
     void onLogoutResult(bool ok, const QString& message);
+
+    void onDeleteNoteResult(bool ok, const QString& msg);
+    void onUpdateNoteResult(bool ok, const QString& msg, int remoteteId, const QString& localAbsPath);
+    void onGetNoteByVersioResult(bool ok, const QString& msg, const QString& content);
+    void onGetHistoryListResult(bool ok, const QString& msg, const QJsonArray& noteHistoryList);
+
     void onUpdateNoteStructureResult(bool ok, const QString& message);
     void onFetchNoteStructureResult(bool ok, const QString& message, const QJsonObject& noteStruct);
     void onNetworkError(const QString& error);
@@ -77,9 +83,9 @@ private:
     // 新增：右侧主编辑器/预览控件
     MarkdownEditorWidget* m_mainEditor = nullptr;
 
+    // 大纲栏右键功能
     void createNoteUnderFolder(const QModelIndex& index);
     void createSubFolder(const QModelIndex& index);
     void deleteNote(const QModelIndex& index);
     void deleteFolder(const QModelIndex& index);
-    void updateNote(const QModelIndex& index);  // TODO:笔记更新
 };

@@ -1,6 +1,7 @@
 #include "httpmanager.h"
 #include "hash_processor.h"
 
+#include <QJsonArray>
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QJsonDocument>
@@ -54,8 +55,7 @@ void HttpManager::login(const QString& username,
     body["username"] = username;
     body["passwordHash"] = HashEncrypt(password);
 
-    QNetworkReply* reply =
-        m_manager.post(request, QJsonDocument(body).toJson());
+    QNetworkReply* reply = m_manager.post(request, QJsonDocument(body).toJson());
     reply->setProperty("requestType", "login");
 }
 
@@ -74,21 +74,69 @@ void HttpManager::logout(const QString& token)
 // DEL /notes/{noteId}
 void HttpManager::deleteNote(const QString& token, const int noteId)
 {
+    QUrl url(m_baseUrl + "/notes/" + QString::number(noteId));
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Auth-Token", token.toUtf8());
+
+    QNetworkReply* reply = m_manager.deleteResource(request);
+    reply->setProperty("requestType", "deleteNote");
+    reply->setProperty("noteId", noteId);
 }
 
-// DEL /notes/{noteId}
-void HttpManager::updateNote(const QString& token, const int noteId, const int code)
+// POST /notes/{noteId}
+void HttpManager::updateNote(
+    const QString& token, 
+    const int noteId, 
+    const int code,
+    const int targetVersion,
+    const QString changeSummary,
+    const QString content,
+    const QString& localAbsPath
+)
 {
+    QUrl url(m_baseUrl + "/notes/" + QString::number(noteId));
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Auth-Token", token.toUtf8());
+
+    QJsonObject body;
+    body["code"] = code;
+    body["targetVersion"] = targetVersion;
+    body["content"] = content;
+    body["changeSummary"] = changeSummary;
+
+    QNetworkReply* reply = m_manager.post(request, QJsonDocument(body).toJson());
+    reply->setProperty("requestType", "updateNote");
+    reply->setProperty("noteId", noteId);
+    reply->setProperty("localAbsPath", localAbsPath);
 }
 
 // GET /notes/{noteId}/{version}
 void HttpManager::getNoteByVersion(const QString& token, const int noteId, const int version)
 {
+    QUrl url(m_baseUrl + "/notes/" + QString::number(noteId) + "/" + QString::number(version));
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Auth-Token", token.toUtf8());
+
+    QNetworkReply* reply = m_manager.get(request);
+    reply->setProperty("requestType", "getNoteByVersion");
+    reply->setProperty("noteId", noteId);
+    reply->setProperty("version", version);
 }
 
 // GET /notes/{noteId}/histories
 void HttpManager::getHistoryList(const QString& token, const int noteId)
 {
+    QUrl url(m_baseUrl + "/notes/" + QString::number(noteId) + "/histories");
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Auth-Token", token.toUtf8());
+
+    QNetworkReply* reply = m_manager.get(request);
+    reply->setProperty("requestType", "getHistoryList");
+    reply->setProperty("noteId", noteId);
 }
 
 // GET /note-structure
@@ -178,12 +226,12 @@ void HttpManager::onReplyFinished(QNetworkReply* reply)
         handleDeleteNoteResponse(obj);
     }
     else if (reqType == "updateNote") {
-        handleUpdateNoteResponse(obj);
+        handleUpdateNoteResponse(reply, obj);
     }
     else if (reqType == "getNoteByVersion") {
         handleGetNoteByVersionResponse(obj);
     }
-    else if (reqType == "getHostoryList") {
+    else if (reqType == "getHistoryList") {
         handleGetHistoryListResponse(obj);
     }
     else if (reqType == "fetchNoteStructure") {
@@ -287,14 +335,14 @@ void HttpManager::handleFetchNoteStructureResponse(const QJsonObject& obj)
     if (msg.isEmpty())
         msg = QStringLiteral("成功获取笔记结构");
 
-    // 成功时一定要 emit，把结构抛给上层（EditorWindow::onFetchResult）
+    // 成功时 emit，把结构抛给上层（EditorWindow::onFetchResult）
     emit fetchNoteStructureResult(true, msg, structureObj);
 }
 
 
 void HttpManager::handleUpdateNoteStructureResponse(const QJsonObject& obj)
 {
-    const int code = obj.value("code").toInt(1);
+    const int code = obj.value("code").toInt(-1);
     const QString msg = obj.value("message").toString();
 
     emit updateNoteStructureResult(code == 0, msg);
@@ -302,17 +350,39 @@ void HttpManager::handleUpdateNoteStructureResponse(const QJsonObject& obj)
 
 void HttpManager::handleDeleteNoteResponse(const QJsonObject& obj)
 {
+    const int code = obj.value("code").toInt(-1);
+    const QString msg = obj.value("message").toString();
+
+    emit deleteNoteResult(code == 0, msg);
 }
 
-void HttpManager::handleUpdateNoteResponse(const QJsonObject& obj)
+void HttpManager::handleUpdateNoteResponse(QNetworkReply* reply, const QJsonObject& obj)
 {
+    const int code = obj.value("code").toInt(-1);
+    const QString msg = obj.value("message").toString();
+    const int remoteId = obj.value("noteId").toInt(-1);
+    const QString localAbsPath = reply->property("localAbsPath").toString();
+
+    emit updateNoteResult(code == 0, msg, remoteId, localAbsPath);
 }
 
 void HttpManager::handleGetNoteByVersionResponse(const QJsonObject& obj)
 {
+    const int code = obj.value("code").toInt(-1);
+    const QString msg = obj.value("message").toString();
+    const QString content = obj.value("content").toString();
+
+    emit getNoteByVersioResult(code == 0, msg, content);
 }
 
 void HttpManager::handleGetHistoryListResponse(const QJsonObject& obj)
 {
+    const int code = obj.value("code").toInt(1);
+    const QString msg = obj.value("message").toString();
+
+    const QJsonValue v = obj.value("noteHistoryList");
+    const QJsonArray list = v.isArray() ? v.toArray() : QJsonArray(); // 非数组则空数组 :contentReference[oaicite:0]{index=0}
+
+    emit getHistoryListResult(code == 0, msg, list);
 }
 

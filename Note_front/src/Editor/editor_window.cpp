@@ -112,12 +112,23 @@ EditorWindow::EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent
 
     connect(m_http, &HttpManager::logoutResult,
             this, &EditorWindow::onLogoutResult);
-    connect(m_http, &HttpManager::networkError,
-            this, &EditorWindow::onNetworkError);
+
+    connect(m_http, &HttpManager::deleteNoteResult,
+        this, &EditorWindow::onDeleteNoteResult);
+    connect(m_http, &HttpManager::updateNoteResult,
+        this, &EditorWindow::onUpdateNoteResult);
+    connect(m_http, &HttpManager::getNoteByVersioResult,
+        this, &EditorWindow::onGetNoteByVersioResult);
+    connect(m_http, &HttpManager::getHistoryListResult,
+        this, &EditorWindow::onGetHistoryListResult);
+
     connect(m_http, &HttpManager::updateNoteStructureResult,
             this, &EditorWindow::onUpdateNoteStructureResult);
     connect(m_http, &HttpManager::fetchNoteStructureResult,
             this, &EditorWindow::onFetchNoteStructureResult);
+
+    connect(m_http, &HttpManager::networkError,
+            this, &EditorWindow::onNetworkError);
 
     //  Treeview双击逻辑
     connect(ui->treeView, &QTreeView::doubleClicked,
@@ -198,31 +209,8 @@ void EditorWindow::onUpdateClicked()
     // 每次更新前都重新扫描目录 + JSON，重建树并写入 json 文件
     initNoteTree(filePath, rootDir);
 
-    // 读取刚刚生成的 json 文件
-    QFile f(filePath);
-    if (!f.open(QIODevice::ReadOnly))
-    {
-        qDebug() << "创建/更新后仍无法读取 json 文件：" << filePath << f.errorString();
-        return;
-    }
-
-    QByteArray bytes = f.readAll();
-    f.close();
-
-    QJsonParseError err;
-    QJsonDocument doc = QJsonDocument::fromJson(bytes, &err);
-    if (err.error != QJsonParseError::NoError)
-    {
-        qDebug() << "JSON parse error:" << err.errorString();
-        return;
-    }
-    if (!doc.isObject())
-    {
-        qDebug() << "JSON root is not an object";
-        return;
-    }
-
-    QJsonObject obj = doc.object();
+    // 直接把当前 m_rootNode 转为 JSON 上传
+    const QJsonObject obj = m_structureMgr->toJson(m_rootNode.get());
 
     // 把最新结构上传给后端
     m_http->updateNoteStructure(m_token, obj);
@@ -263,6 +251,43 @@ void EditorWindow::onLogoutResult(bool ok, const QString& message)
     m_token.clear();
     emit logoutSucceeded();
 }
+
+void EditorWindow::onDeleteNoteResult(bool ok, const QString& msg)
+{
+
+}
+
+void EditorWindow::onUpdateNoteResult(bool ok, const QString& msg, int remoteId, const QString& localAbsPath)
+{
+    if (!ok || remoteId <= 0 || localAbsPath.isEmpty())
+        return;
+
+    const QString rootDir = m_config->projectRoot();
+    if (rootDir.isEmpty())
+    {
+        qDebug() << "projectRoot is empty in onFetchNoteStructureResult";
+        return;
+    }
+
+    const QString filePath = rootDir + "/.Note/note_structure.json";
+
+    const bool updated = m_structureMgr->setRemoteNoteIdByAbsolutePath(m_rootNode.get(), localAbsPath, remoteId);
+    if (!updated) {
+        // 找不到通常是因为树还没刷新/路径不一致
+        return;
+    }
+
+    m_structureMgr->saveToJsonFile(filePath, m_rootNode.get());
+}
+
+void EditorWindow::onGetNoteByVersioResult(bool ok, const QString& msg, const QString& content)
+{
+}
+
+void EditorWindow::onGetHistoryListResult(bool ok, const QString& msg, const QJsonArray& noteHistoryList)
+{
+}
+
 
 void EditorWindow::onUpdateNoteStructureResult(bool ok, const QString& message)
 {
@@ -449,15 +474,15 @@ void EditorWindow::onTreeItemDoubleClicked(const QModelIndex& index)
     m_mainEditor->setFilePath(absolutePath);
     m_mainEditor->loadFromFile();
 
-    // QMessageBox::information(
-    //     this,
-    //     "Open note",
-    //     QString("id = %1\nremoteId = %2\nfullPath = %3\nabsolutePath = %4")
-    //     .arg(id)
-    //     .arg(remoteId)
-    //     .arg(fullPath)
-    //     .arg(absolutePath))
-    // ;
+    QMessageBox::information(
+        this,
+        "Open note",
+        QString("id = %1\nremoteId = %2\nfullPath = %3\nabsolutePath = %4")
+        .arg(id)
+        .arg(remoteId)
+        .arg(fullPath)
+        .arg(absolutePath))
+    ;
 }
 
 // 右键逻辑
@@ -523,9 +548,6 @@ void EditorWindow::onTreeViewContextMenuRequested(const QPoint& pos)
 
         connect(actDelete, &QAction::triggered, this, [this, index]() {
             this->deleteNote(index);
-            });
-        connect(actUpdate, &QAction::triggered, this, [this, index]() {
-            this->updateNote(index);
             });
     }
 
@@ -609,6 +631,18 @@ void EditorWindow::createNoteUnderFolder(const QModelIndex& index)
     }
 
     QByteArray initial = QString("# %1\n").arg(name).toUtf8();
+
+    // 将新笔记传送到服务器
+    m_http->updateNote(
+        m_token, 
+        -1,
+        2,
+        -1,
+        "Note init",
+        initial,
+        filePath
+    );
+
     f.write(initial);
     f.close();
 
@@ -851,16 +885,3 @@ void EditorWindow::deleteFolder(const QModelIndex& index)
     const QString jsonFile = rootDir + "/.Note/note_structure.json";
     initNoteTree(jsonFile, rootDir);
 }
-
-
-// TODO:更新笔记历史
-void EditorWindow::updateNote(const QModelIndex& index)
-{
-    Q_UNUSED(index);
-    QMessageBox::information(
-        this,
-        QStringLiteral("更新窗口"),
-        QStringLiteral("更新逻辑暂未实现。")
-    );
-}
-

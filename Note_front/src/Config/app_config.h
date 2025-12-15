@@ -3,6 +3,8 @@
 #include <QObject>
 #include <QString>
 
+#include "notenode.h"
+
 class HttpManager;
 /**
  * 运行时配置类，统一保存：

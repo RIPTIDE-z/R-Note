@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QObject>
 #include <QJsonObject>
 #include <QNetworkAccessManager>
 
@@ -36,7 +35,15 @@ public:
     void deleteNote(const QString& token, const int noteId);
 
     // DEL /notes/{noteId}
-    void updateNote(const QString& token, const int noteId, const int code);
+    void updateNote(
+        const QString& token, 
+        const int noteId, 
+        const int code,
+        const int targetVersion,
+        const QString changeSummary,
+        const QString content,
+        const QString& localAbsPath
+    );
 
     // GET /notes/{noteId}/{version}
     void getNoteByVersion(const QString& token, const int noteId, const int version);
@@ -66,9 +73,10 @@ signals:
 
     // 笔记信息相关响应
     void deleteNoteResult(bool ok, const QString& msg);
-    void updateNoteResult(bool ok, const QString& msg, int noteId);
-    void getNoteByVersioResult(bool ok, const QString& msg, const QJsonObject& note);
-    void getHistoryListResult(bool ok, const QString& msg, const QJsonObject& noteHistoryList);
+    void updateNoteResult(bool ok, const QString& msg, int noteId, const QString& localAbsPath);
+    void getNoteByVersioResult(bool ok, const QString& msg, const QString& content);
+    // List直接解析为数组
+    void getHistoryListResult(bool ok, const QString& msg, const QJsonArray& noteHistoryList);
 
     // 结构相关响应
     void fetchNoteStructureResult(
@@ -89,7 +97,7 @@ private:
     void handleFetchNoteStructureResponse(const QJsonObject& obj);
     void handleUpdateNoteStructureResponse(const QJsonObject& obj);
     void handleDeleteNoteResponse(const QJsonObject& obj);
-    void handleUpdateNoteResponse(const QJsonObject& obj);
+    void handleUpdateNoteResponse(QNetworkReply* reply, const QJsonObject& obj);
     void handleGetNoteByVersionResponse(const QJsonObject& obj);
     void handleGetHistoryListResponse(const QJsonObject& obj);
 

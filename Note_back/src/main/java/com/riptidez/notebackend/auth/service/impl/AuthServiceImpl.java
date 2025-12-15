@@ -33,7 +33,7 @@ public class AuthServiceImpl implements AuthService {
         User user = new User();
         user.setUsername(username);
         user.setPasswordHash(passwordHash);
-        user.setNoteStructure("{\"version\":1,\"userId\":1,\"root\":{\"id\":\"root\",\"name\":\"root\",\"type\":\"folder\",\"children\":[]}}");
+        user.setNoteStructure("{}");
         int rows = userMapper.insert(user);
         if (rows != 1) {
             log.info("注册失败，无法插入用户");
