@@ -561,6 +561,9 @@ void EditorWindow::onUpdateNoteResult(bool ok, const QString& msg, int remoteId,
         return;
     }
 
+    m_currentRemoteNoteId = remoteId;
+    m_currentNoteAbsPath = localAbsPath;
+
     qDebug() << "接收到拉取结果";
 
     const QString rootDir = m_config->projectRoot();
@@ -578,7 +581,7 @@ void EditorWindow::onUpdateNoteResult(bool ok, const QString& msg, int remoteId,
     }
 
     m_structureMgr->saveToJsonFile(filePath, m_rootNode.get());
-    updateNoteTree(filePath, rootDir);
+    initNoteTree(filePath, rootDir);
 
     if (!m_token.isEmpty() && m_currentRemoteNoteId > 0)
     {
@@ -1001,15 +1004,15 @@ void EditorWindow::onTreeItemDoubleClicked(const QModelIndex& index)
         m_http->getHistoryList(m_token, m_currentRemoteNoteId);
     }
 
-    // QMessageBox::information(
-    //     this,
-    //     "Open note",
-    //     QString("id = %1\nremoteId = %2\nfullPath = %3\nabsolutePath = %4")
-    //     .arg(id)
-    //     .arg(remoteId)
-    //     .arg(fullPath)
-    //     .arg(absolutePath))
-    // ;
+    QMessageBox::information(
+        this,
+        "Open note",
+        QString("id = %1\nremoteId = %2\nfullPath = %3\nabsolutePath = %4")
+        .arg(id)
+        .arg(remoteId)
+        .arg(fullPath)
+        .arg(absolutePath))
+    ;
 }
 
 // 右键逻辑
@@ -1120,7 +1123,7 @@ void EditorWindow::createNoteUnderFolder(const QModelIndex& index)
         "}"
     );
 
-    // 关键：去掉系统边框
+    // 去掉系统边框
     dlg.setWindowFlags(dlg.windowFlags() | Qt::FramelessWindowHint);
 
     if (dlg.exec() != QDialog::Accepted)
@@ -1136,7 +1139,6 @@ void EditorWindow::createNoteUnderFolder(const QModelIndex& index)
 
     if (QFileInfo::exists(filePath))
     {
-        // 这里也可以改成无边框 QMessageBox，下一个步骤会教
         QMessageBox::warning(
             this,
             QStringLiteral("文件已存在"),
@@ -1172,6 +1174,9 @@ void EditorWindow::createNoteUnderFolder(const QModelIndex& index)
 
     f.write(initial);
     f.close();
+
+    m_mainEditor->setFilePath(filePath);
+    m_mainEditor->loadFromFile();
 
     if (!m_config)
     {
