@@ -140,7 +140,7 @@ void HttpManager::getHistoryList(const QString& token, const int noteId)
 }
 
 // GET /note-structure
-void HttpManager::fetchNoteStructure(const QString& token)
+void HttpManager:: fetchNoteStructure(const QString& token)
 {
     QUrl url(m_baseUrl + "/note-structure");
 
@@ -150,7 +150,6 @@ void HttpManager::fetchNoteStructure(const QString& token)
     QNetworkReply* reply = m_manager.get(request);
     qDebug() << "已发送请求" << request.url();
     reply->setProperty("requestType", "fetchNoteStructure");
-
 }
 
 // PUT /note-structure
@@ -177,7 +176,7 @@ void HttpManager::updateNoteStructure(const QString& token,
         });
 }
 
-
+// 请求结束处理返回响应reply
 void HttpManager::onReplyFinished(QNetworkReply* reply)
 {
     const QString reqType = reply->property("requestType").toString();
@@ -208,7 +207,6 @@ void HttpManager::onReplyFinished(QNetworkReply* reply)
         reply->deleteLater();
         return;
     }
-
 
     QJsonObject obj = doc.object();
 
@@ -261,7 +259,7 @@ void HttpManager::handleLoginResponse(const QJsonObject& obj)
     const QJsonObject noteStruct =
         obj.value("note_structure").toObject();   // 允许为空
 
-    // 使用信号将处理完成后的数据发出去，对应
+    // 使用信号将处理完成后的数据发出去
     emit loginResult(true, msg, token, noteStruct);
 }
 
@@ -269,6 +267,7 @@ void HttpManager::handleRegisterResponse(const QJsonObject& obj)
 {
     const int code = obj.value("code").toInt(1);
     const QString msg = obj.value("message").toString();
+
     emit registerResult(code == 0, msg);
 }
 
@@ -299,6 +298,7 @@ void HttpManager::handleFetchNoteStructureResponse(const QJsonObject& obj)
     const QJsonValue v = obj.value("structure");
     qDebug() << "已拿取到QJson值, type =" << v.type();
 
+    // 区分返回的是String还是Json对象
     if (v.isString()) {
         const QString structureStr = v.toString();
         if (!structureStr.isEmpty()) {
@@ -319,7 +319,6 @@ void HttpManager::handleFetchNoteStructureResponse(const QJsonObject& obj)
         }
     }
     else if (v.isObject()) {
-        // 如果以后你又加回 @JsonRawValue 变成嵌套对象，这里也兼容
         structureObj = v.toObject();
         qDebug() << "已拿取到QJson对象(嵌套 object)";
     }
@@ -339,10 +338,9 @@ void HttpManager::handleFetchNoteStructureResponse(const QJsonObject& obj)
     emit fetchNoteStructureResult(true, msg, structureObj);
 }
 
-
 void HttpManager::handleUpdateNoteStructureResponse(const QJsonObject& obj)
 {
-    const int code = obj.value("code").toInt(-1);
+    const int code = obj.value("code").toInt(1);
     const QString msg = obj.value("message").toString();
 
     emit updateNoteStructureResult(code == 0, msg);
@@ -350,7 +348,7 @@ void HttpManager::handleUpdateNoteStructureResponse(const QJsonObject& obj)
 
 void HttpManager::handleDeleteNoteResponse(const QJsonObject& obj)
 {
-    const int code = obj.value("code").toInt(-1);
+    const int code = obj.value("code").toInt(1);
     const QString msg = obj.value("message").toString();
 
     emit deleteNoteResult(code == 0, msg);
@@ -358,7 +356,7 @@ void HttpManager::handleDeleteNoteResponse(const QJsonObject& obj)
 
 void HttpManager::handleUpdateNoteResponse(QNetworkReply* reply, const QJsonObject& obj)
 {
-    const int code = obj.value("code").toInt(-1);
+    const int code = obj.value("code").toInt(1);
     const QString msg = obj.value("message").toString();
     const int remoteId = obj.value("noteId").toInt(-1);
     const QString localAbsPath = reply->property("localAbsPath").toString();
@@ -368,7 +366,7 @@ void HttpManager::handleUpdateNoteResponse(QNetworkReply* reply, const QJsonObje
 
 void HttpManager::handleGetNoteByVersionResponse(const QJsonObject& obj)
 {
-    const int code = obj.value("code").toInt(-1);
+    const int code = obj.value("code").toInt(1);
     const QString msg = obj.value("message").toString();
     const QString content = obj.value("content").toString();
 
@@ -381,8 +379,7 @@ void HttpManager::handleGetHistoryListResponse(const QJsonObject& obj)
     const QString msg = obj.value("message").toString();
 
     const QJsonValue v = obj.value("noteHistoryList");
-    const QJsonArray list = v.isArray() ? v.toArray() : QJsonArray(); // 非数组则空数组 :contentReference[oaicite:0]{index=0}
+    const QJsonArray list = v.isArray() ? v.toArray() : QJsonArray(); 
 
     emit getHistoryListResult(code == 0, msg, list);
 }
-

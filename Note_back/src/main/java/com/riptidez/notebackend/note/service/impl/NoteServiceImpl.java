@@ -48,7 +48,13 @@ public class NoteServiceImpl implements NoteService {
             throw new ExceptionWithMessage("笔记不存在或无权限");
         }
         log.info("成功获取用户{}的笔记{}，尝试获取{}版本", userId, noteId, version);
-        NoteHistory history = noteHistoryMapper.getNoteHistoryByNoteIdAndVersion(noteId, version.intValue());
+        NoteHistory history = new NoteHistory();
+        if(version > 0){
+            history = noteHistoryMapper.getNoteHistoryByNoteIdAndVersion(noteId, version.intValue());
+        } else {
+            history = noteHistoryMapper.getLatestNoteHistoryByNoteId(noteId);
+        }
+
         if (history == null) {
             log.info("获取用户{}的笔记{}的{}版本失败", userId, noteId, version);
             throw new ExceptionWithMessage("历史版本不存在");

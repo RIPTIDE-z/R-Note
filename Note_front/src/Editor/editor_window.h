@@ -5,6 +5,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QPoint>
+#include <QQueue> 
 
 class AppConfig;
 class HttpManager;
@@ -61,7 +62,7 @@ private slots:
     void onTreeViewContextMenuRequested(const QPoint& pos);
     void onHistoryContextMenuRequested(const QPoint& pos);
     
-    // 服务端响应
+    // 服务端响应体处理
     void onLogoutResult(bool ok, const QString& message);
 
     void onDeleteNoteResult(bool ok, const QString& msg);
@@ -121,14 +122,34 @@ private:
     // 弹窗输入 changeSummary（OK/Cancel）
     bool promptChangeSummary(const QString& title, const QString& hint, QString& outSummary);
 
-    // 回滚流程的“挂起状态”（因为要先 getNoteByVersion，再 updateNote）
+    // 回滚流程的状态
     bool m_pendingRollback = false;
     int m_pendingRollbackVersion = -1;
     QString m_pendingRollbackSummary;
 
-    // ===== 远端删除的“挂起上下文” =====
+    // 远端删除的状态
     bool m_pendingDeleteRemote = false;
     int m_pendingDeleteNoteId = -1;          // 远端 noteId（remoteId）
     QString m_pendingDeleteAbsPath;          // 本地文件绝对路径
     QString m_pendingDeleteName;             // 笔记名（用于提示）
+
+    // 待拉取文件
+    struct PendingPull
+    {
+        int remoteNoteId = -1;   // 后端 noteId（你 json 里的 remoteNoteId）
+        QString absPath;         // 本地要落盘的绝对路径
+    };
+
+    // 待拉取文件的队列
+    QQueue<PendingPull> m_missingPullQueue;
+    PendingPull m_currentPull;
+    bool m_isPullingMissingNotes = false;
+
+    QString m_missingPullRootDir;
+    QString m_missingPullJsonFile;
+
+private:
+    // 对比远端笔记结构和当前目录分析需要拉取的文件
+    void collectMissingFromRemoteTree(const NoteNode* node, const QString& rootDir);
+    void startNextMissingPull();
 };

@@ -35,28 +35,42 @@
 #include <QDateTime>
 #include <algorithm>
 
-static bool overwriteFileUtf8Simple(const QString& absPath, const QString& content, QString* errOut = nullptr)
+// 把远端 fullPath（如 "/Root/a/b.md"）映射成本地绝对路径（rootDir + "/a/b.md"）
+static QString remoteFullPathToLocalAbs(const QString& rootDir, const QString& fullPath)
+{
+    // fullPath: "/RemoteRoot/sub/a.md"
+    QString p = fullPath;
+    if (p.startsWith('/')) p.remove(0, 1);      // "RemoteRoot/sub/a.md"
+
+    const int slash = p.indexOf('/');
+    QString rel = (slash >= 0) ? p.mid(slash) : QString(); // "/sub/a.md" 或 ""
+
+    return QDir::cleanPath(rootDir + rel);
+}
+
+// 将文本按照utf8编码写入文件，写入失败会把错误信息写到err
+static bool writeUtf8TextFile(const QString& absPath, const QString& text, QString* err = nullptr)
 {
     QFile f(absPath);
     if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
     {
-        if (errOut) *errOut = f.errorString();
+        if (err) *err = f.errorString();
         return false;
     }
 
-    // 直接写 UTF-8
-    const QByteArray bytes = content.toUtf8();
+    const QByteArray bytes = text.toUtf8();
     const qint64 n = f.write(bytes);
     f.close();
 
     if (n != bytes.size())
     {
-        if (errOut) *errOut = "write failed";
+        if (err) *err = QStringLiteral("write size mismatch");
         return false;
     }
     return true;
 }
 
+// 缩短时间显示
 static QString formatCreatedTimeShort(const QString& iso)
 {
     // 后端示例：2025-12-15T15:50:45.617364（可能是 6 位微秒）
@@ -97,31 +111,27 @@ EditorWindow::EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent
     // 关闭水平滚动条，避免被压窄时横向滚动条闪一下
     ui->treeView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
+    // 右键单机设置
     ui->treeView->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->treeView, &QTreeView::customContextMenuRequested,
         this, &EditorWindow::onTreeViewContextMenuRequested);
 
-    // =============================== 左侧 QSplitter ===============================
+    // =============================== 左侧 mainSplitter ===============================
 
-    // 使用 ui 中的 mainSplitter，不再手动移除 left/rightPanel
     m_splitter = ui->mainSplitter;
     if (m_splitter)
     {
         m_splitter->setHandleWidth(4);
         m_splitter->setStyleSheet(
-            "QSplitter::handle:horizontal {"
-            "    background: #444444;"
-            "}"
-            "QSplitter::handle:horizontal:hover {"
-            "    background: #888888;"
-            "}"
+            "QSplitter::handle:horizontal { background: #444444;}"
+            "QSplitter::handle:horizontal:hover { background: #888888;}"
         );
         // 左右拉伸比例 1:3
         m_splitter->setStretchFactor(0, 1);
         m_splitter->setStretchFactor(1, 3);
     }
 
-    // =============================== rightSplitter ===============================
+    // =============================== 右侧 rightSplitter ===============================
     m_rightSplitter = ui->rightSplitter;
     if (m_rightSplitter)
     {
@@ -131,12 +141,9 @@ EditorWindow::EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent
             "QSplitter::handle:horizontal:hover { background: #888888; }"
         );
 
-        // 允许 child 拖到 0（Qt 默认就是 true，这里显式写出来更清晰）
+        // 允许 child 拖到 0
         m_rightSplitter->setChildrenCollapsible(true);
         m_rightSplitter->setCollapsible(1, true);   // preview 允许收缩到 0
-        // 可选：防止 editor/history 被误拖到 0（不影响 preview 拖到 0）
-        m_rightSplitter->setCollapsible(0, false);
-        m_rightSplitter->setCollapsible(2, false);
 
         // 伸缩倾向（不等于最终宽度，最终由 setSizes 决定）
         m_rightSplitter->setStretchFactor(0, 6); // editor
@@ -372,7 +379,6 @@ void EditorWindow::onLogoutClicked()
 // 更新逻辑：先重建本地结构，再上传
 void EditorWindow::onUpdateClicked()
 {
-    // TODO:弹出确认窗口
     if (!m_config)
     {
         qDebug() << "Config is null, cannot update note structure";
@@ -488,10 +494,7 @@ void EditorWindow::onNoteUpdateClicked()
     // ---------- 获取 content：优先从编辑器内存拿（避免未保存改动丢失） ----------
     QString content;
 
-    // 方案A（推荐）：如果 MarkdownEditorWidget 能提供当前文本
-    // content = m_mainEditor->currentText();  // 需要你在 MarkdownEditorWidget 里加一个 getter（见下节）
-
-    // 方案B：回退读文件（注意：若编辑器里有未保存改动，这里会读到旧内容）
+    // 回退读文件（注意：若编辑器里有未保存改动，这里会读到旧内容）
     if (content.isEmpty())
     {
         const QString filePath = QDir::fromNativeSeparators(m_currentNoteAbsPath);
@@ -507,7 +510,7 @@ void EditorWindow::onNoteUpdateClicked()
 
     // ---------- 调后端更新 ----------
     const int code = 0;
-    const int targetVersion = -1; // 如果你的后端用 -1 表示“自动递增/更新最新”，就用它；否则改成你后端期望的值
+    const int targetVersion = -1; 
 
     ui->noteUpdateButton->setEnabled(false);
 
@@ -558,6 +561,8 @@ void EditorWindow::onUpdateNoteResult(bool ok, const QString& msg, int remoteId,
         return;
     }
 
+    qDebug() << "接收到拉取结果";
+
     const QString rootDir = m_config->projectRoot();
     if (rootDir.isEmpty())
     {
@@ -569,7 +574,6 @@ void EditorWindow::onUpdateNoteResult(bool ok, const QString& msg, int remoteId,
 
     const bool updated = m_structureMgr->setRemoteNoteIdByAbsolutePath(m_rootNode.get(), localAbsPath, remoteId);
     if (!updated) {
-        // 找不到通常是因为树还没刷新/路径不一致
         return;
     }
 
@@ -578,6 +582,7 @@ void EditorWindow::onUpdateNoteResult(bool ok, const QString& msg, int remoteId,
 
     if (!m_token.isEmpty() && m_currentRemoteNoteId > 0)
     {
+        qDebug() << "正在刷新历史列表";
         m_http->getHistoryList(m_token, m_currentRemoteNoteId);
     }
 
@@ -608,9 +613,35 @@ void EditorWindow::onHistoryItemClicked(QListWidgetItem* item)
     m_http->getNoteByVersion(m_token, m_currentRemoteNoteId, version);
 }
 
+// 根据 m_isPullingMissingNotes m_pendingRollback 来判断是因为什么操作而
 void EditorWindow::onGetNoteByVersionResult(bool ok, const QString& msg, const QString& content)
 {
-    // ===== 回滚流程 =====
+    // ============================= 拉取缺失笔记 =================================
+    if (m_isPullingMissingNotes)
+    {
+        if (!ok)
+        {
+            qDebug() << "Pull missing note failed:" << msg
+                << "remoteNoteId=" << m_currentPull.remoteNoteId
+                << "absPath=" << m_currentPull.absPath;
+
+            // 失败也继续下一个
+            startNextMissingPull();
+            return;
+        }
+
+        QString err;
+        if (!writeUtf8TextFile(m_currentPull.absPath, content, &err))
+        {
+            qDebug() << "Write missing note failed:" << m_currentPull.absPath << err;
+            // 写失败也继续下一个
+        }
+
+        startNextMissingPull();
+        return;
+    }
+
+    // ================================ 回滚笔记 ====================================
     if (m_pendingRollback)
     {
         const int ver = m_pendingRollbackVersion;
@@ -633,40 +664,39 @@ void EditorWindow::onGetNoteByVersionResult(bool ok, const QString& msg, const Q
             return;
         }
 
-        // 1) 直接覆写本地文件
+        // 覆写本地文件
         QString err;
-        if (!overwriteFileUtf8Simple(m_currentNoteAbsPath, content, &err))
+        if (!writeUtf8TextFile(m_currentNoteAbsPath, content, &err))
         {
             QMessageBox::warning(this, "Rollback", QString("覆写本地文件失败：%1").arg(err));
             return;
         }
 
-        // 2) 刷新主编辑器（用你现有的 setFilePath/loadFromFile）
+        // 刷新主编辑器
         if (m_mainEditor)
         {
             m_mainEditor->setFilePath(m_currentNoteAbsPath);
             m_mainEditor->loadFromFile();
         }
 
-        // 3) 发起回滚更新：code=1，targetVersion=ver，content=该版本内容
+        // 发起回滚
         m_http->updateNote(
             m_token,
             m_currentRemoteNoteId,
-            /*code*/ 1,
-            /*targetVersion*/ ver,
+            1,
+            ver,
             summary,
             content,
             m_currentNoteAbsPath
         );
 
-        // 4) 同时刷新历史列表（简单做法：直接再拉一次）
-        // 说明：如果后端生成新历史有延迟，建议你在 onUpdateNoteResult(ok==true) 里再拉一次做兜底。
+        // 刷新历史列表
         m_http->getHistoryList(m_token, m_currentRemoteNoteId);
 
         return;
     }
 
-    // ===== 普通预览分支（保持你原来的逻辑）=====
+    // ========================== 预览历史 ================================
     if (!m_historyPreview) return;
 
     if (!ok)
@@ -679,7 +709,6 @@ void EditorWindow::onGetNoteByVersionResult(bool ok, const QString& msg, const Q
     setHistoryPreviewVisible(true);
     m_historyPreview->setMarkdownText(content);
 }
-
 
 void EditorWindow::onGetHistoryListResult(bool ok, const QString& msg, const QJsonArray& noteHistoryList)
 {
@@ -700,6 +729,7 @@ void EditorWindow::onGetHistoryListResult(bool ok, const QString& msg, const QJs
     std::vector<HItem> items;
     items.reserve(noteHistoryList.size());
 
+    // 转为HItem结构
     for (const auto& v : noteHistoryList)
     {
         if (!v.isObject()) continue;
@@ -722,6 +752,7 @@ void EditorWindow::onGetHistoryListResult(bool ok, const QString& msg, const QJs
         return;
     }
 
+    // 为每个HItem创建QListWidgetItem
     for (const auto& it : items)
     {
         const QString t = formatCreatedTimeShort(it.createdTime);
@@ -741,7 +772,6 @@ void EditorWindow::onGetHistoryListResult(bool ok, const QString& msg, const QJs
     m_summaryText->setPlainText(QStringLiteral("历史列表已加载：点击某一行以预览该版本内容。"));
 }
 
-
 void EditorWindow::onUpdateNoteStructureResult(bool ok, const QString& message)
 {
     if (!ok)
@@ -757,11 +787,7 @@ void EditorWindow::onFetchNoteStructureResult(bool ok, const QString& message, c
     qDebug() << "fetch note structure result:" << ok << message;
 
     if (!ok)
-    {
-        // TODO: 弹对话框或状态栏提示
-        // showMessage(message);
         return;
-    }
 
     if (!m_config)
     {
@@ -776,6 +802,12 @@ void EditorWindow::onFetchNoteStructureResult(bool ok, const QString& message, c
         return;
     }
 
+    if (m_token.isEmpty())
+    {
+        qDebug() << "Token is empty in onFetchNoteStructureResult";
+        return;
+    }
+
     const QString filePath = rootDir + "/.Note/note_structure.json";
 
     // 确保目录存在
@@ -785,26 +817,50 @@ void EditorWindow::onFetchNoteStructureResult(bool ok, const QString& message, c
     {
         if (!dir.mkpath("."))
         {
-            qDebug() << "Failed to create dir for note_structure.json:"
-                << dir.absolutePath();
+            qDebug() << "Failed to create dir for note_structure.json:" << dir.absolutePath();
             return;
         }
     }
 
     // 把后端返回的结构写入本地 json 文件
-    QJsonDocument doc(noteStruct);
-    QFile f(filePath);
-    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
     {
-        qDebug() << "Failed to open note_structure.json for write:"
-            << filePath << f.errorString();
+        QJsonDocument doc(noteStruct);
+        QFile f(filePath);
+        if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        {
+            qDebug() << "Failed to open note_structure.json for write:" << filePath << f.errorString();
+            return;
+        }
+        f.write(doc.toJson(QJsonDocument::Indented));
+        f.close();
+    }
+
+    // 解析远端结构：用 fullPath 映射本地路径，找缺失并加入队
+    int maxIdDummy = 0;
+    std::unique_ptr<NoteNode> remoteRoot = m_structureMgr->fromJson(noteStruct, maxIdDummy, QString());
+    if (!remoteRoot)
+    {
+        // 解析失败就退化为：至少重建一次树
+        initNoteTree(filePath, rootDir);
         return;
     }
-    f.write(doc.toJson(QJsonDocument::Indented));
-    f.close();
 
-    // 刷新左侧树 + 编辑区
-    updateNoteTree(filePath, rootDir);
+    m_missingPullQueue.clear();
+    collectMissingFromRemoteTree(remoteRoot.get(), rootDir);
+
+    // 没有缺失：直接重建树
+    if (m_missingPullQueue.isEmpty())
+    {
+        initNoteTree(filePath, rootDir);
+        return;
+    }
+
+    // 有缺失：开始串行拉取
+    m_isPullingMissingNotes = true;
+    m_missingPullRootDir = rootDir;
+    m_missingPullJsonFile = filePath;
+
+    startNextMissingPull();
 }
 
 void EditorWindow::onNetworkError(const QString& error)
@@ -856,7 +912,6 @@ void EditorWindow::initNoteTree(const QString& jsonFilePath,
     ui->treeView->expandToDepth(0);
     ui->treeView->header()->setStretchLastSection(true);
 }
-
 
 /**
  * @brief 根据Json文件和目录更新Treeview
@@ -946,15 +1001,15 @@ void EditorWindow::onTreeItemDoubleClicked(const QModelIndex& index)
         m_http->getHistoryList(m_token, m_currentRemoteNoteId);
     }
 
-    QMessageBox::information(
-        this,
-        "Open note",
-        QString("id = %1\nremoteId = %2\nfullPath = %3\nabsolutePath = %4")
-        .arg(id)
-        .arg(remoteId)
-        .arg(fullPath)
-        .arg(absolutePath))
-    ;
+    // QMessageBox::information(
+    //     this,
+    //     "Open note",
+    //     QString("id = %1\nremoteId = %2\nfullPath = %3\nabsolutePath = %4")
+    //     .arg(id)
+    //     .arg(remoteId)
+    //     .arg(fullPath)
+    //     .arg(absolutePath))
+    // ;
 }
 
 // 右键逻辑
@@ -1222,14 +1277,14 @@ void EditorWindow::createSubFolder(const QModelIndex& index)
     initNoteTree(jsonFile, rootDir);
 }
 
-
 // 删除笔记
+// 远端本地删除为异步删除，不检验同步性
+//TODO 同步删除
 void EditorWindow::deleteNote(const QModelIndex& index)
 {
     const QString demonstrateName = index.data(Qt::DisplayRole).toString();
     const QString absolutePath = index.data(Qt::UserRole + 5).toString();
 
-    // 远端 noteId（你 TreeModel 里存的 remoteId）
     const QVariant remoteIdVar = index.data(Qt::UserRole + 3);
     const int remoteId = remoteIdVar.isValid() ? remoteIdVar.toInt() : -1;
 
@@ -1251,13 +1306,13 @@ void EditorWindow::deleteNote(const QModelIndex& index)
     if (ret != QMessageBox::Yes)
         return;
 
-    // 1) 先发远端删除（异步，不等待结果）
+    // 先发远端删除（异步，不等待结果）
     if (m_http && !m_token.isEmpty() && remoteId > 0)
     {
-        m_http->deleteNote(m_token, remoteId); // QNetworkAccessManager::deleteResource -> HTTP DELETE（异步）:contentReference[oaicite:1]{index=1}
+        m_http->deleteNote(m_token, remoteId); 
     }
 
-    // 2) 立刻删本地
+    // 立刻删本地
     QFile f(absolutePath);
     if (f.exists())
     {
@@ -1274,7 +1329,7 @@ void EditorWindow::deleteNote(const QModelIndex& index)
         }
     }
 
-    // 3) 刷新树
+    // 刷新树
     if (!m_config)
     {
         qWarning() << "deleteNote: m_config is null";
@@ -1385,11 +1440,10 @@ bool EditorWindow::promptChangeSummary(const QString& title, const QString& hint
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
     layout->addWidget(buttons);
 
-    // 注意：QDialogButtonBox::accepted() 不等于 QDialog::accept()，要自己连上。:contentReference[oaicite:1]{index=1}
     connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
 
-    if (dlg.exec() != QDialog::Accepted)  // exec() 返回 Accepted/Rejected :contentReference[oaicite:2]{index=2}
+    if (dlg.exec() != QDialog::Accepted)
         return false;
 
     outSummary = edit->text().trimmed();
@@ -1415,7 +1469,6 @@ void EditorWindow::onHistoryContextMenuRequested(const QPoint& pos)
     QMenu menu(this);
     QAction* actRollback = menu.addAction(QStringLiteral("回滚到此版本"));
 
-    // 注意：pos 是 viewport 坐标，要 mapToGlobal
     QAction* chosen = menu.exec(m_historyList->viewport()->mapToGlobal(pos));
     if (chosen != actRollback)
         return;
@@ -1425,7 +1478,6 @@ void EditorWindow::onHistoryContextMenuRequested(const QPoint& pos)
         QStringLiteral("请输入本次回滚的 changeSummary（必填）："),
         summary))
     {
-        // 用户取消或没填
         return;
     }
 
@@ -1434,10 +1486,71 @@ void EditorWindow::onHistoryContextMenuRequested(const QPoint& pos)
     m_pendingRollbackVersion = version;
     m_pendingRollbackSummary = summary;
 
-    // 可选：给 UI 提示
-    if (m_summaryText)
-        m_summaryText->setPlainText(QStringLiteral("正在拉取 v%1 内容以回滚...").arg(version));
-
-    // 先拉取目标版本内容（复用你已有接口）
+    // 先拉取目标版本内容，真正回滚逻辑在onGetNoteByVersionResult里
     m_http->getNoteByVersion(m_token, m_currentRemoteNoteId, version);
+}
+
+// 通过从远端json文件和项目目录解析出每个文件的绝对路径，根据绝对路径对比文件是否缺失
+// 这种检验只检验了文件是否存在而无法检验是否进行了修改或者是否是原本的文件
+//TODO 文件hash校验
+void EditorWindow::collectMissingFromRemoteTree(const NoteNode* node, const QString& rootDir)
+{
+    if (!node) return;
+
+    const QString abs = remoteFullPathToLocalAbs(rootDir, node->fullPath);
+
+    if (node->type == NoteNodeType::Folder)
+    {
+        // 先确保远端结构中的目录在本地存在
+        QDir d;
+        d.mkpath(abs); // 递归创建目录
+
+        for (const auto& child : node->children)
+            collectMissingFromRemoteTree(child.get(), rootDir);
+
+        return;
+    }
+
+    // 如果此文件存在则返回
+    if (QFileInfo::exists(abs))
+        return;
+
+    // 没有 remoteNoteId 的 note 没法拉取内容
+    if (!node->remoteNoteId.has_value())
+    {
+        qDebug() << "Missing local note but remoteNoteId is empty, skip:" << node->fullPath;
+        return;
+    }
+
+    // 确保父目录存在
+    QFileInfo fi(abs);
+    QDir parentDir = fi.dir();
+    if (!parentDir.exists())
+        parentDir.mkpath(".");
+
+    PendingPull p;
+    p.remoteNoteId = static_cast<int>(*node->remoteNoteId);
+    p.absPath = abs;
+    // 将文件加入拉取队列
+    m_missingPullQueue.enqueue(p);
+}
+
+void EditorWindow::startNextMissingPull()
+{
+    if (!m_isPullingMissingNotes)
+        return;
+
+    if (m_missingPullQueue.isEmpty())
+    {
+        // 拉取完毕：用“json + 本地目录扫描”重建树（让 absolutePath 正确）
+        m_isPullingMissingNotes = false;
+        initNoteTree(m_missingPullJsonFile, m_missingPullRootDir); 
+        return;
+    }
+
+    // 拉取完成后拉取队列中下一个
+    m_currentPull = m_missingPullQueue.dequeue();
+
+    // version = -1 拉最新版本
+    m_http->getNoteByVersion(m_token, m_currentPull.remoteNoteId, -1);
 }

@@ -49,6 +49,7 @@ public class NoteController {
     }
 
     // 获取指定笔记的指定版本的内容
+    // -1则拉取最新版本
     @GetMapping("/{noteId}/{version}")
     public GetNoteResponseDto getHistory(@RequestHeader("Auth-Token") String token,
                                          @PathVariable Long noteId,
