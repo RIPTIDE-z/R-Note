@@ -1191,8 +1191,7 @@ void EditorWindow::createNoteUnderFolder(const QModelIndex& index)
         return;
     }
 
-    const QString jsonFile = rootDir + "/.Note/note_structure.json";
-    initNoteTree(jsonFile, rootDir);
+    onUpdateClicked();
 }
 
 // 创建子文件夹
@@ -1277,9 +1276,8 @@ void EditorWindow::createSubFolder(const QModelIndex& index)
         qWarning() << "createSubFolder: projectRoot is empty";
         return;
     }
-
-    const QString jsonFile = rootDir + "/.Note/note_structure.json";
-    initNoteTree(jsonFile, rootDir);
+    
+    onUpdateClicked();
 }
 
 // 删除笔记
