@@ -64,6 +64,11 @@ public:
         int& maxIdInOut,
         const QString& parentPath = QString());
 
+    // 写入remotenoteId
+    bool setRemoteNoteIdByAbsolutePath(NoteNode* node,
+        const QString& absPath,
+        const int remoteId);
+
     void buildPathIndex(const NoteNode* node,
         QHash<QString, IdInfo>& index,
         const QString& parentPath = QString()) const;

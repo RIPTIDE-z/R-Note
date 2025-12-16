@@ -156,7 +156,7 @@ void MarkdownEditorWidget::onEditorTextChanged()
     emit contentChanged();
 
     // 防抖自动保存：每次修改重置计时器
-    m_autoSaveTimer->start(1000); // 1 秒不输入就保存
+    m_autoSaveTimer->start(100); // 1 秒不输入就保存
 }
 
 void MarkdownEditorWidget::onAutoSaveTimeout()

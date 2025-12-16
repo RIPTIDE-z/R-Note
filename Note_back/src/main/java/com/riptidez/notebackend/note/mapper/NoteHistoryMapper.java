@@ -10,7 +10,7 @@ import java.util.List;
 public interface NoteHistoryMapper {
     int insert(NoteHistory history);
 
-    List<NoteHistory> getNoteHistoryWithoutContentListByNoteId(@Param("noteId") Long noteId);
+    List<NoteHistory> getNoteHistoryListByNoteId(@Param("noteId") Long noteId);
 
     NoteHistory getNoteHistoryByNoteIdAndVersion(@Param("noteId") Long noteId,
                                                  @Param("version") Integer version);

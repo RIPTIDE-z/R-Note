@@ -1,60 +1,54 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
-  <class>EditorWindow</class>
-  <widget class="QMainWindow" name="EditorWindow">
-	<property name="geometry">
-	  <rect>
-		<x>0</x>
-		<y>0</y>
-		<width>1000</width>
-		<height>600</height>
-	  </rect>
-	</property>
-	<property name="windowTitle">
-	  <string>Note Editor</string>
-	</property>
-	<widget class="QWidget" name="centralwidget">
-	  <layout class="QVBoxLayout" name="centralLayout">
-		<property name="leftMargin">
-		  <number>16</number>
-		</property>
-		<property name="topMargin">
-		  <number>16</number>
-		</property>
-		<property name="rightMargin">
-		  <number>16</number>
-		</property>
-		<property name="bottomMargin">
-		  <number>16</number>
-		</property>
-		<property name="spacing">
-		  <number>12</number>
-		</property>
-		<item>
-		  <layout class="QHBoxLayout" name="mainHLayout">
-			<property name="spacing">
-			  <number>12</number>
-			</property>
-			<item>
-			  <widget class="QSplitter" name="mainSplitter">
-				<property name="orientation">
-				  <enum>Qt::Horizontal</enum>
-				</property>
-				<widget class="QWidget" name="leftPanel">
-				  <layout class="QVBoxLayout" name="leftLayout">
-					<property name="spacing">
-					  <number>8</number>
-					</property>
-					<item>
-					  <widget class="QTreeView" name="treeView">
-						<property name="alternatingRowColors">
-						  <bool>true</bool>
-						</property>
-						<property name="headerHidden">
-						  <bool>false</bool>
-						</property>
-						<property name="styleSheet">
-						  <string notr="true">
+ <class>EditorWindow</class>
+ <widget class="QMainWindow" name="EditorWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1000</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Note Editor</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="centralLayout">
+    <property name="spacing">
+     <number>12</number>
+    </property>
+    <property name="leftMargin">
+     <number>16</number>
+    </property>
+    <property name="topMargin">
+     <number>16</number>
+    </property>
+    <property name="rightMargin">
+     <number>16</number>
+    </property>
+    <property name="bottomMargin">
+     <number>16</number>
+    </property>
+    <item>
+     <layout class="QHBoxLayout" name="mainHLayout">
+      <property name="spacing">
+       <number>12</number>
+      </property>
+      <item>
+       <widget class="QSplitter" name="mainSplitter">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <widget class="QWidget" name="leftPanel">
+         <layout class="QVBoxLayout" name="leftLayout">
+          <property name="spacing">
+           <number>8</number>
+          </property>
+          <item>
+           <widget class="QTreeView" name="treeView">
+            <property name="styleSheet">
+             <string notr="true">
 							QTreeView {
 							background-color: #181818;
 							alternate-background-color: #202020;
@@ -75,77 +69,157 @@
 							padding: 4px;
 							}
 						  </string>
-						</property>
-					  </widget>
-					</item>
-				  </layout>
-				</widget>
-				<widget class="QWidget" name="rightPanel">
-				  <layout class="QVBoxLayout" name="rightLayout">
-					<property name="spacing">
-					  <number>8</number>
-					</property>
-				  </layout>
-				</widget>
-			  </widget>
-			</item>
-		  </layout>
-		</item>
-		<item>
-		  <layout class="QHBoxLayout" name="bottomBarLayout">
-			<property name="spacing">
-			  <number>8</number>
-			</property>
-			<item>
-			  <widget class="QPushButton" name="logoutButton">
-				<property name="text">
-				  <string>登出</string>
-				</property>
-			  </widget>
-			</item>
-			<item>
-			  <widget class="QPushButton" name="updateButton">
-				<property name="text">
-				  <string>更新笔记</string>
-				</property>
-			  </widget>
-			</item>
-			<item>
-			  <widget class="QPushButton" name="syncButton">
-				<property name="text">
-				  <string>拉取笔记</string>
-				</property>
-			  </widget>
-			</item>
-			<item>
-			  <spacer name="bottomSpacer">
-				<property name="orientation">
-				  <enum>Qt::Horizontal</enum>
-				</property>
-				<property name="sizeHint">
-				  <size>
-					<width>40</width>
-					<height>20</height>
-				  </size>
-				</property>
-			  </spacer>
-			</item>
-		  </layout>
-		</item>
-	  </layout>
-	</widget>
-	<widget class="QMenuBar" name="menubar">
-	  <property name="geometry">
-		<rect>
-		  <x>0</x>
-		  <y>0</y>
-		  <width>1000</width>
-		  <height>22</height>
-		</rect>
-	  </property>
-	</widget>
-	<widget class="QStatusBar" name="statusbar"/>
+            </property>
+            <property name="alternatingRowColors">
+             <bool>true</bool>
+            </property>
+            <property name="headerHidden">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="rightPanel">
+         <layout class="QVBoxLayout" name="rightLayout">
+          <property name="spacing">
+           <number>8</number>
+          </property>
+          <item>
+           <widget class="QSplitter" name="rightSplitter">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <widget class="QWidget" name="editorHost">
+             <layout class="QVBoxLayout" name="editorHostLayout">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="previewHost">
+             <property name="visible">
+              <bool>false</bool>
+             </property>
+             <layout class="QVBoxLayout" name="previewHostLayout">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="historyHost">
+             <layout class="QVBoxLayout" name="historyHostLayout">
+              <property name="spacing">
+               <number>8</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+             </layout>
+            </widget>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="bottomBarLayout">
+      <property name="spacing">
+       <number>8</number>
+      </property>
+      <item>
+       <widget class="QPushButton" name="logoutButton">
+        <property name="text">
+         <string>登出</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="updateButton">
+        <property name="text">
+         <string>更新笔记结构</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="syncButton">
+        <property name="text">
+         <string>拉取笔记结构</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="noteUpdateButton">
+        <property name="text">
+         <string>更新笔记</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="bottomSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+   </layout>
   </widget>
-  <resources/>
-  <connections/>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1000</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
 </ui>

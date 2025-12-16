@@ -1,6 +1,7 @@
 #include "httpmanager.h"
 #include "hash_processor.h"
 
+#include <QJsonArray>
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QJsonDocument>
@@ -10,6 +11,7 @@ HttpManager::HttpManager(QObject* parent)
     : QObject(parent)
     , m_baseUrl("http://127.0.0.1:8080/api")   // 可以被 Config 覆盖
 {
+    // 将onReplyFinished连接，请求结束会进入其中处理
     connect(&m_manager, &QNetworkAccessManager::finished,
         this, &HttpManager::onReplyFinished);
 }
@@ -34,9 +36,10 @@ void HttpManager::registerUser(const QString& username,
     body["username"] = username;
     body["passwordHash"] = HashEncrypt(password);
 
-    // 创建响应且指定响应类型
+    // post发出请求并把响应存入reply
     QNetworkReply* reply =
         m_manager.post(request, QJsonDocument(body).toJson());
+    // 指定reply的类型，以便onReplyFinished辨别
     reply->setProperty("requestType", "register");
 }
 
@@ -52,8 +55,7 @@ void HttpManager::login(const QString& username,
     body["username"] = username;
     body["passwordHash"] = HashEncrypt(password);
 
-    QNetworkReply* reply =
-        m_manager.post(request, QJsonDocument(body).toJson());
+    QNetworkReply* reply = m_manager.post(request, QJsonDocument(body).toJson());
     reply->setProperty("requestType", "login");
 }
 
@@ -69,8 +71,76 @@ void HttpManager::logout(const QString& token)
     reply->setProperty("requestType", "logout");
 }
 
+// DEL /notes/{noteId}
+void HttpManager::deleteNote(const QString& token, const int noteId)
+{
+    QUrl url(m_baseUrl + "/notes/" + QString::number(noteId));
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Auth-Token", token.toUtf8());
+
+    QNetworkReply* reply = m_manager.deleteResource(request);
+    reply->setProperty("requestType", "deleteNote");
+    reply->setProperty("noteId", noteId);
+}
+
+// POST /notes/{noteId}
+void HttpManager::updateNote(
+    const QString& token, 
+    const int noteId, 
+    const int code,
+    const int targetVersion,
+    const QString changeSummary,
+    const QString content,
+    const QString& localAbsPath
+)
+{
+    QUrl url(m_baseUrl + "/notes/" + QString::number(noteId));
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Auth-Token", token.toUtf8());
+
+    QJsonObject body;
+    body["code"] = code;
+    body["targetVersion"] = targetVersion;
+    body["content"] = content;
+    body["changeSummary"] = changeSummary;
+
+    QNetworkReply* reply = m_manager.post(request, QJsonDocument(body).toJson());
+    reply->setProperty("requestType", "updateNote");
+    reply->setProperty("noteId", noteId);
+    reply->setProperty("localAbsPath", localAbsPath);
+}
+
+// GET /notes/{noteId}/{version}
+void HttpManager::getNoteByVersion(const QString& token, const int noteId, const int version)
+{
+    QUrl url(m_baseUrl + "/notes/" + QString::number(noteId) + "/" + QString::number(version));
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Auth-Token", token.toUtf8());
+
+    QNetworkReply* reply = m_manager.get(request);
+    reply->setProperty("requestType", "getNoteByVersion");
+    reply->setProperty("noteId", noteId);
+    reply->setProperty("version", version);
+}
+
+// GET /notes/{noteId}/histories
+void HttpManager::getHistoryList(const QString& token, const int noteId)
+{
+    QUrl url(m_baseUrl + "/notes/" + QString::number(noteId) + "/histories");
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Auth-Token", token.toUtf8());
+
+    QNetworkReply* reply = m_manager.get(request);
+    reply->setProperty("requestType", "getHistoryList");
+    reply->setProperty("noteId", noteId);
+}
+
 // GET /note-structure
-void HttpManager::fetchNoteStructure(const QString& token)
+void HttpManager:: fetchNoteStructure(const QString& token)
 {
     QUrl url(m_baseUrl + "/note-structure");
 
@@ -80,7 +150,6 @@ void HttpManager::fetchNoteStructure(const QString& token)
     QNetworkReply* reply = m_manager.get(request);
     qDebug() << "已发送请求" << request.url();
     reply->setProperty("requestType", "fetchNoteStructure");
-
 }
 
 // PUT /note-structure
@@ -107,7 +176,7 @@ void HttpManager::updateNoteStructure(const QString& token,
         });
 }
 
-
+// 请求结束处理返回响应reply
 void HttpManager::onReplyFinished(QNetworkReply* reply)
 {
     const QString reqType = reply->property("requestType").toString();
@@ -139,10 +208,9 @@ void HttpManager::onReplyFinished(QNetworkReply* reply)
         return;
     }
 
-
     QJsonObject obj = doc.object();
 
-    // 根据响应类型调用对应的响应处理函数
+    // 根据响应类型调对应的响应处理函数
     if (reqType == "login") {
         handleLoginResponse(obj);
     }
@@ -151,6 +219,18 @@ void HttpManager::onReplyFinished(QNetworkReply* reply)
     }
     else if (reqType == "logout") {
         handleLogoutResponse(obj);
+    }
+    else if (reqType == "deleteNode") {
+        handleDeleteNoteResponse(obj);
+    }
+    else if (reqType == "updateNote") {
+        handleUpdateNoteResponse(reply, obj);
+    }
+    else if (reqType == "getNoteByVersion") {
+        handleGetNoteByVersionResponse(obj);
+    }
+    else if (reqType == "getHistoryList") {
+        handleGetHistoryListResponse(obj);
     }
     else if (reqType == "fetchNoteStructure") {
         handleFetchNoteStructureResponse(obj);
@@ -179,6 +259,7 @@ void HttpManager::handleLoginResponse(const QJsonObject& obj)
     const QJsonObject noteStruct =
         obj.value("note_structure").toObject();   // 允许为空
 
+    // 使用信号将处理完成后的数据发出去
     emit loginResult(true, msg, token, noteStruct);
 }
 
@@ -186,6 +267,7 @@ void HttpManager::handleRegisterResponse(const QJsonObject& obj)
 {
     const int code = obj.value("code").toInt(1);
     const QString msg = obj.value("message").toString();
+
     emit registerResult(code == 0, msg);
 }
 
@@ -216,6 +298,7 @@ void HttpManager::handleFetchNoteStructureResponse(const QJsonObject& obj)
     const QJsonValue v = obj.value("structure");
     qDebug() << "已拿取到QJson值, type =" << v.type();
 
+    // 区分返回的是String还是Json对象
     if (v.isString()) {
         const QString structureStr = v.toString();
         if (!structureStr.isEmpty()) {
@@ -236,7 +319,6 @@ void HttpManager::handleFetchNoteStructureResponse(const QJsonObject& obj)
         }
     }
     else if (v.isObject()) {
-        // 如果以后你又加回 @JsonRawValue 变成嵌套对象，这里也兼容
         structureObj = v.toObject();
         qDebug() << "已拿取到QJson对象(嵌套 object)";
     }
@@ -252,16 +334,52 @@ void HttpManager::handleFetchNoteStructureResponse(const QJsonObject& obj)
     if (msg.isEmpty())
         msg = QStringLiteral("成功获取笔记结构");
 
-    // 成功时一定要 emit，把结构抛给上层（EditorWindow::onFetchResult）
+    // 成功时 emit，把结构抛给上层（EditorWindow::onFetchResult）
     emit fetchNoteStructureResult(true, msg, structureObj);
 }
-
 
 void HttpManager::handleUpdateNoteStructureResponse(const QJsonObject& obj)
 {
     const int code = obj.value("code").toInt(1);
     const QString msg = obj.value("message").toString();
 
-    emit noteStructureUpdated(code == 0, msg);
+    emit updateNoteStructureResult(code == 0, msg);
 }
 
+void HttpManager::handleDeleteNoteResponse(const QJsonObject& obj)
+{
+    const int code = obj.value("code").toInt(1);
+    const QString msg = obj.value("message").toString();
+
+    emit deleteNoteResult(code == 0, msg);
+}
+
+void HttpManager::handleUpdateNoteResponse(QNetworkReply* reply, const QJsonObject& obj)
+{
+    const int code = obj.value("code").toInt(1);
+    const QString msg = obj.value("message").toString();
+    const int remoteId = obj.value("noteId").toInt(-1);
+    const QString localAbsPath = reply->property("localAbsPath").toString();
+
+    emit updateNoteResult(code == 0, msg, remoteId, localAbsPath);
+}
+
+void HttpManager::handleGetNoteByVersionResponse(const QJsonObject& obj)
+{
+    const int code = obj.value("code").toInt(1);
+    const QString msg = obj.value("message").toString();
+    const QString content = obj.value("content").toString();
+
+    emit getNoteByVersioResult(code == 0, msg, content);
+}
+
+void HttpManager::handleGetHistoryListResponse(const QJsonObject& obj)
+{
+    const int code = obj.value("code").toInt(1);
+    const QString msg = obj.value("message").toString();
+
+    const QJsonValue v = obj.value("noteHistoryList");
+    const QJsonArray list = v.isArray() ? v.toArray() : QJsonArray(); 
+
+    emit getHistoryListResult(code == 0, msg, list);
+}

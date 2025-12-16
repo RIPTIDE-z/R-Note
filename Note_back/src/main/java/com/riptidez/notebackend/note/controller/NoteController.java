@@ -2,8 +2,7 @@ package com.riptidez.notebackend.note.controller;
 
 import com.riptidez.notebackend.auth.helper.AuthTokenHelper;
 import com.riptidez.notebackend.exception.ExceptionWithMessage;
-import com.riptidez.notebackend.note.dto.UpdateNoteRequestDto;
-import com.riptidez.notebackend.note.dto.UpdateNoteResponseDto;
+import com.riptidez.notebackend.note.dto.*;
 import com.riptidez.notebackend.note.entity.NoteHistory;
 import com.riptidez.notebackend.note.service.NoteService;
 import org.slf4j.Logger;
@@ -22,36 +21,47 @@ public class NoteController {
     @Autowired
     private AuthTokenHelper authTokenHelper;
 
-    // TODO: DEL /{noteId}
     // 完全删除一个笔记，包括历史版本
     // 注意Note和NoteHistory表创建时自带的删除约束
     @DeleteMapping("/{noteId}")
-    public UpdateNoteResponseDto deleteNote(@RequestHeader("Auth-Token") String token,
+    public DeleteNoteResponseDto deleteNote(@RequestHeader("Auth-Token") String token,
                                             @PathVariable Long noteId) {
         Long userId = authTokenHelper.requireUserId(token);
         try {
             noteHistoryService.deleteNote(noteId, userId);
-            return UpdateNoteResponseDto.success("笔记删除成功", null);
+            return DeleteNoteResponseDto.success("笔记删除成功");
         } catch (ExceptionWithMessage e) {
-            return UpdateNoteResponseDto.fail(e.getMessage(), null);
+            return DeleteNoteResponseDto.fail(e.getMessage());
         }
     }
 
     // 获取不带实际内容的笔记历史列表，用于创建历史版本大纲
     @GetMapping("/{noteId}/histories")
-    public List<NoteHistory> listHistories(@RequestHeader("Auth-Token") String token,
-                                           @PathVariable Long noteId) {
+    public GetHistoryListResponseDto listHistories(@RequestHeader("Auth-Token") String token,
+                                                   @PathVariable Long noteId) {
         Long userId = authTokenHelper.requireUserId(token);
-        return noteHistoryService.listHistories(noteId, userId);
+        try{
+            List<NoteHistory> list = noteHistoryService.listHistories(noteId, userId);
+            return GetHistoryListResponseDto.success("成功获取笔记历史列表", list);
+        } catch (ExceptionWithMessage e) {
+            return GetHistoryListResponseDto.fail(e.getMessage(), null);
+        }
     }
 
     // 获取指定笔记的指定版本的内容
+    // -1则拉取最新版本
     @GetMapping("/{noteId}/{version}")
-    public NoteHistory getHistory(@RequestHeader("Auth-Token") String token,
-                                  @PathVariable Long noteId,
-                                  @PathVariable Integer version) {
+    public GetNoteResponseDto getHistory(@RequestHeader("Auth-Token") String token,
+                                         @PathVariable Long noteId,
+                                         @PathVariable Integer version) {
         Long userId = authTokenHelper.requireUserId(token);
-        return noteHistoryService.getHistory(noteId, version, userId);
+        try {
+            NoteHistory noteHistory = noteHistoryService.getHistory(noteId, version, userId);
+            String content = noteHistory.getContent();
+            return GetNoteResponseDto.success("成功获取笔记内容", content);
+        } catch (ExceptionWithMessage e) {
+            return GetNoteResponseDto.fail(e.getMessage());
+        }
     }
 
     // 对未同步笔记进行新建，对已同步的笔记进行更新和回滚

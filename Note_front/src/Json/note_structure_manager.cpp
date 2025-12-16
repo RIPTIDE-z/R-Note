@@ -323,3 +323,27 @@ QStandardItemModel* NoteStructureManager::createTreeModel(
 
     return model;
 }
+
+// 通过绝对路径在json中搜寻对应笔记并写入remoteId
+bool NoteStructureManager::setRemoteNoteIdByAbsolutePath(NoteNode* node,
+    const QString& absPath,
+    const int remoteId)
+{
+    if (!node) return false;
+
+    const QString a = QDir::cleanPath(node->absolutePath);
+    const QString b = QDir::cleanPath(absPath);
+
+    if (node->type == NoteNodeType::Note && a == b) {
+        node->remoteNoteId = remoteId;
+        return true;
+    }
+
+    if (node->type == NoteNodeType::Folder) {
+        for (auto& child : node->children) {
+            if (setRemoteNoteIdByAbsolutePath(child.get(), absPath, remoteId))
+                return true;
+        }
+    }
+    return false;
+}

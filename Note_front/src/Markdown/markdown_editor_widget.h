@@ -44,9 +44,9 @@ private:
     QPushButton* m_toggleButton;
 
     // md文件路径
-    QString   m_filePath;
+    QString m_filePath;
     QTimer* m_autoSaveTimer;
 
     // 标识 编辑/预览
-    bool      m_inPreview = false;
+    bool m_inPreview = false;
 };
