@@ -561,6 +561,9 @@ void EditorWindow::onUpdateNoteResult(bool ok, const QString& msg, int remoteId,
         return;
     }
 
+    m_currentRemoteNoteId = remoteId;
+    m_currentNoteAbsPath = localAbsPath;
+
     qDebug() << "接收到拉取结果";
 
     const QString rootDir = m_config->projectRoot();
@@ -578,7 +581,7 @@ void EditorWindow::onUpdateNoteResult(bool ok, const QString& msg, int remoteId,
     }
 
     m_structureMgr->saveToJsonFile(filePath, m_rootNode.get());
-    updateNoteTree(filePath, rootDir);
+    initNoteTree(filePath, rootDir);
 
     if (!m_token.isEmpty() && m_currentRemoteNoteId > 0)
     {
@@ -719,6 +722,55 @@ void EditorWindow::onGetHistoryListResult(bool ok, const QString& msg, const QJs
     m_summaryText->clear();
     setHistoryPreviewVisible(false);
 
+    struct HItem { int version; QString createdTime; QString changeSummary; };
+    std::vector<HItem> items;
+    items.reserve(noteHistoryList.size());
+
+    // 转为HItem结构
+    for (const auto& v : noteHistoryList)
+    {
+        if (!v.isObject()) continue;
+        const QJsonObject o = v.toObject();
+        HItem it;
+        it.version = o.value("version").toInt();
+        it.createdTime = o.value("createdTime").toString();
+        it.changeSummary = o.value("changeSummary").toString();
+        items.push_back(std::move(it));
+    }
+
+    // 新版本在上（version 降序）
+    std::sort(items.begin(), items.end(), [](const HItem& a, const HItem& b) {
+        return a.version > b.version;
+        });
+
+    if (items.empty())
+    {
+        m_summaryText->setPlainText(QStringLiteral("该笔记暂无历史版本。"));
+        return;
+    }
+
+    // 为每个HItem创建QListWidgetItem
+    for (const auto& it : items)
+    {
+        const QString t = formatCreatedTimeShort(it.createdTime);
+        const QString rowText = QString("v%1  %2").arg(it.version).arg(t);
+
+        auto* item = new QListWidgetItem(rowText);
+        item->setData(Qt::UserRole, it.version);
+        item->setData(Qt::UserRole + 1, it.changeSummary);
+        item->setToolTip(QString("version=%1\ncreated=%2\nsummary=%3")
+            .arg(it.version)
+            .arg(it.createdTime)
+            .arg(it.changeSummary));
+
+        m_historyList->addItem(item);
+    }
+
+    m_summaryText->setPlainText(QStringLiteral("历史列表已加载：点击某一行以预览该版本内容。"));
+}
+
+void EditorWindow::onUpdateNoteStructureResult(bool ok, const QString& message)
+{
     if (!ok)
     {
         m_summaryText->setPlainText(QStringLiteral("获取历史列表失败：%1").arg(msg));
@@ -751,6 +803,15 @@ void EditorWindow::onGetHistoryListResult(bool ok, const QString& msg, const QJs
         m_summaryText->setPlainText(QStringLiteral("该笔记暂无历史版本。"));
         return;
     }
+    QMessageBox::information(this, "更新笔记结构成功", message);
+}
+
+void EditorWindow::onFetchNoteStructureResult(bool ok, const QString& message, const QJsonObject& noteStruct)
+{
+    qDebug() << "fetch note structure result:" << ok << message;
+
+    if (!ok)
+        return;
 
     // 为每个HItem创建QListWidgetItem
     for (const auto& it : items)
@@ -1120,7 +1181,7 @@ void EditorWindow::createNoteUnderFolder(const QModelIndex& index)
         "}"
     );
 
-    // 关键：去掉系统边框
+    // 去掉系统边框
     dlg.setWindowFlags(dlg.windowFlags() | Qt::FramelessWindowHint);
 
     if (dlg.exec() != QDialog::Accepted)
@@ -1136,7 +1197,6 @@ void EditorWindow::createNoteUnderFolder(const QModelIndex& index)
 
     if (QFileInfo::exists(filePath))
     {
-        // 这里也可以改成无边框 QMessageBox，下一个步骤会教
         QMessageBox::warning(
             this,
             QStringLiteral("文件已存在"),
@@ -1173,6 +1233,9 @@ void EditorWindow::createNoteUnderFolder(const QModelIndex& index)
     f.write(initial);
     f.close();
 
+    m_mainEditor->setFilePath(filePath);
+    m_mainEditor->loadFromFile();
+
     if (!m_config)
     {
         qWarning() << "createNoteUnderFolder: m_config is null";
@@ -1186,8 +1249,7 @@ void EditorWindow::createNoteUnderFolder(const QModelIndex& index)
         return;
     }
 
-    const QString jsonFile = rootDir + "/.Note/note_structure.json";
-    initNoteTree(jsonFile, rootDir);
+    onUpdateClicked();
 }
 
 // 创建子文件夹
@@ -1272,9 +1334,8 @@ void EditorWindow::createSubFolder(const QModelIndex& index)
         qWarning() << "createSubFolder: projectRoot is empty";
         return;
     }
-
-    const QString jsonFile = rootDir + "/.Note/note_structure.json";
-    initNoteTree(jsonFile, rootDir);
+    
+    onUpdateClicked();
 }
 
 // 删除笔记
