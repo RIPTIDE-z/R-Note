@@ -1,11 +1,11 @@
 #pragma once
 
-#include <QMainWindow>
-#include <memory>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QMainWindow>
 #include <QPoint>
-#include <QQueue> 
+#include <QQueue>
+#include <memory>
 
 class AppConfig;
 class HttpManager;
@@ -20,8 +20,9 @@ class QListWidget;
 class QListWidgetItem;
 class QTextEdit;
 
-namespace Ui {
-    class EditorWindow;
+namespace Ui
+{
+class EditorWindow;
 }
 
 /**
@@ -31,10 +32,9 @@ namespace Ui {
  * - 左右之间用 QSplitter 分隔，可用鼠标拖动改变比例
  * - 底部：通栏的“登出”按钮，一直可见
  */
-class EditorWindow : public QMainWindow
-{
+class EditorWindow : public QMainWindow {
     Q_OBJECT
-public:
+   public:
     explicit EditorWindow(HttpManager* http, AppConfig* config, QWidget* parent = nullptr);
     ~EditorWindow() override;
 
@@ -42,14 +42,14 @@ public:
 
     // 读取文件夹结构新建json文件并初始化Treeview
     void initNoteTree(const QString& jsonFilePath, const QString& rootDirPath);
-    // 读取现有的json文件更新左侧 TreeView 
+    // 读取现有的json文件更新左侧 TreeView
     void updateNoteTree(const QString& jsonFilePath, const QString& rootDirPath);
 
-signals:
+   signals:
     // 通知主程序切回登录界面
     void logoutSucceeded();
 
-private slots:
+   private slots:
     // 按钮点击
     void onLogoutClicked();
     void onUpdateClicked();
@@ -61,12 +61,13 @@ private slots:
     // 右键菜单
     void onTreeViewContextMenuRequested(const QPoint& pos);
     void onHistoryContextMenuRequested(const QPoint& pos);
-    
+
     // 服务端响应体处理
     void onLogoutResult(bool ok, const QString& message);
 
     void onDeleteNoteResult(bool ok, const QString& msg);
-    void onUpdateNoteResult(bool ok, const QString& msg, int remoteteId, const QString& localAbsPath);
+    void
+    onUpdateNoteResult(bool ok, const QString& msg, int remoteteId, const QString& localAbsPath);
     void onGetNoteByVersionResult(bool ok, const QString& msg, const QString& content);
     void onGetHistoryListResult(bool ok, const QString& msg, const QJsonArray& noteHistoryList);
 
@@ -77,7 +78,7 @@ private slots:
     // 历史预览：点击某一行后拉取指定版本内容 -> 显示到 previewHost
     void onHistoryItemClicked(QListWidgetItem* item);
 
-private:
+   private:
     Ui::EditorWindow* ui = nullptr;
 
     HttpManager* m_http = nullptr;
@@ -129,15 +130,14 @@ private:
 
     // 远端删除的状态
     bool m_pendingDeleteRemote = false;
-    int m_pendingDeleteNoteId = -1;          // 远端 noteId（remoteId）
-    QString m_pendingDeleteAbsPath;          // 本地文件绝对路径
-    QString m_pendingDeleteName;             // 笔记名（用于提示）
+    int m_pendingDeleteNoteId = -1;  // 远端 noteId（remoteId）
+    QString m_pendingDeleteAbsPath;  // 本地文件绝对路径
+    QString m_pendingDeleteName;     // 笔记名（用于提示）
 
     // 待拉取文件
-    struct PendingPull
-    {
-        int remoteNoteId = -1;   // 后端 noteId（你 json 里的 remoteNoteId）
-        QString absPath;         // 本地要落盘的绝对路径
+    struct PendingPull {
+        int remoteNoteId = -1;  // 后端 noteId（你 json 里的 remoteNoteId）
+        QString absPath;        // 本地要落盘的绝对路径
     };
 
     // 待拉取文件的队列
@@ -148,7 +148,7 @@ private:
     QString m_missingPullRootDir;
     QString m_missingPullJsonFile;
 
-private:
+   private:
     // 对比远端笔记结构和当前目录分析需要拉取的文件
     void collectMissingFromRemoteTree(const NoteNode* node, const QString& rootDir);
     void startNextMissingPull();

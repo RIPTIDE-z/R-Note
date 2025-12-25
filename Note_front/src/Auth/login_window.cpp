@@ -1,24 +1,22 @@
 #include "login_window.h"
-#include "ui_login_window.h"
 
-#include "httpmanager.h"
-#include "config_dialog.h"
-#include "app_config.h"
-
-#include <QJsonObject>
 #include <QEvent>
-#include <QPushButton>
-#include <QLineEdit>
+#include <QJsonObject>
 #include <QLabel>
+#include <QLineEdit>
+#include <QPushButton>
 #include <QWidget>
 
-LoginWindow::LoginWindow(HttpManager* http,
-    AppConfig* config,
-    QWidget* parent)
-    : QWidget(parent)
-    , ui(new Ui::LoginWindow)
-    , m_http(http)
-    , m_config(config)
+#include "app_config.h"
+#include "config_dialog.h"
+#include "httpmanager.h"
+#include "ui_login_window.h"
+
+LoginWindow::LoginWindow(HttpManager* http, AppConfig* config, QWidget* parent)
+    : QWidget(parent),
+      ui(new Ui::LoginWindow),
+      m_http(http),
+      m_config(config)
 {
     ui->setupUi(this);
 
@@ -32,30 +30,21 @@ LoginWindow::LoginWindow(HttpManager* http,
     ui->createAccount->installEventFilter(this);
 
     // 信号槽
-    connect(ui->loginButton, &QPushButton::clicked,
-        this, &LoginWindow::onLoginClicked);
+    connect(ui->loginButton, &QPushButton::clicked, this, &LoginWindow::onLoginClicked);
 
-    connect(m_http, &HttpManager::loginResult,
-        this, &LoginWindow::onLoginResult);
-    connect(m_http, &HttpManager::networkError,
-        this, &LoginWindow::onNetworkError);
+    connect(m_http, &HttpManager::loginResult, this, &LoginWindow::onLoginResult);
+    connect(m_http, &HttpManager::networkError, this, &LoginWindow::onNetworkError);
 
     // “配置…”按钮 —— 与 RegisterWindow 相同逻辑
-    connect(ui->configButton, &QPushButton::clicked,
-        this, &LoginWindow::onConfigButtonClicked);
-
+    connect(ui->configButton, &QPushButton::clicked, this, &LoginWindow::onConfigButtonClicked);
 }
 
-LoginWindow::~LoginWindow()
-{
-    delete ui;
-}
+LoginWindow::~LoginWindow() { delete ui; }
 
 bool LoginWindow::eventFilter(QObject* obj, QEvent* event)
 {
     // 只处理 createAccount 标签的鼠标释放事件
-    if (obj == ui->createAccount &&
-        event->type() == QEvent::MouseButtonRelease) {
+    if (obj == ui->createAccount && event->type() == QEvent::MouseButtonRelease) {
         emit requestShowRegister();
         return true;
     }
@@ -75,8 +64,7 @@ void LoginWindow::onLoginClicked()
 
     // 强制要求先配置好 Base URL 和 Project Root（和注册窗口保持一致）
     if (!m_config || m_config->projectRoot().isEmpty()) {
-        ui->messageLabel->setText(
-            QStringLiteral("请先点击“配置…”设置 Project Root"));
+        ui->messageLabel->setText(QStringLiteral("请先点击“配置…”设置 Project Root"));
         return;
     }
 
@@ -88,10 +76,12 @@ void LoginWindow::onLoginClicked()
     }
 }
 
-void LoginWindow::onLoginResult(bool ok,
+void LoginWindow::onLoginResult(
+    bool ok,
     const QString& message,
     const QString& token,
-    const QJsonObject& noteStructure)
+    const QJsonObject& noteStructure
+)
 {
     ui->loginButton->setEnabled(true);
 
@@ -113,40 +103,34 @@ void LoginWindow::onNetworkError(const QString& error)
 
 void LoginWindow::onConfigButtonClicked()
 {
-    QWidget* win = window();   // 顶层窗口 MainWindow
+    QWidget* win = window();  // 顶层窗口 MainWindow
 
     // 半透明遮罩（和 RegisterWindow 完全一样）
     auto* overlay = new QWidget(win);
     overlay->setObjectName("ConfigOverlay");
-    overlay->setStyleSheet(
-        "#ConfigOverlay { background-color: rgba(0, 0, 0, 160); }");
+    overlay->setStyleSheet("#ConfigOverlay { background-color: rgba(0, 0, 0, 160); }");
     overlay->setGeometry(win->rect());
     overlay->show();
     overlay->raise();
 
-    const QString baseUrl =
-        m_config ? m_config->baseUrl() : QString();
-    const QString projectRoot =
-        m_config ? m_config->projectRoot() : QString();
+    const QString baseUrl = m_config ? m_config->baseUrl() : QString();
+    const QString projectRoot = m_config ? m_config->projectRoot() : QString();
 
     ConfigDialog dlg(baseUrl, projectRoot, win);
-    connect(&dlg, &ConfigDialog::configAccepted,
-        this, &LoginWindow::onConfigAccepted);
+    connect(&dlg, &ConfigDialog::configAccepted, this, &LoginWindow::onConfigAccepted);
 
     // 居中
     dlg.adjustSize();
     const QRect frameGeom = win->frameGeometry();
     const QSize dlgSize = dlg.size();
-    const QPoint center = frameGeom.center()
-        - QPoint(dlgSize.width() / 2, dlgSize.height() / 2);
+    const QPoint center = frameGeom.center() - QPoint(dlgSize.width() / 2, dlgSize.height() / 2);
     dlg.move(center);
 
     dlg.exec();
     overlay->deleteLater();
 }
 
-void LoginWindow::onConfigAccepted(const QString& baseUrl,
-    const QString& projectRoot)
+void LoginWindow::onConfigAccepted(const QString& baseUrl, const QString& projectRoot)
 {
     if (m_config) {
         m_config->setBaseUrl(baseUrl);

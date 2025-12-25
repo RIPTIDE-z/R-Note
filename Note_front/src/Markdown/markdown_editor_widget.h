@@ -7,10 +7,9 @@ class QStackedWidget;
 class QTimer;
 class MarkdownPreviewWidget;
 
-class MarkdownEditorWidget : public QWidget
-{
+class MarkdownEditorWidget : public QWidget {
     Q_OBJECT
-public:
+   public:
     explicit MarkdownEditorWidget(QWidget* parent = nullptr);
 
     void setFilePath(const QString& path);
@@ -19,25 +18,25 @@ public:
     QString markdownText() const;
     void setMarkdownText(const QString& text, bool updateEditor = true);
 
-signals:
+   signals:
     void contentChanged();
     void fileSaved(const QString& path);
-    void modeChanged(bool previewMode); // true=预览
+    void modeChanged(bool previewMode);  // true=预览
 
-public slots:
+   public slots:
     void loadFromFile();
     void saveToFile();
     void setPreviewMode(bool on);
     void toggleMode();
 
-private slots:
+   private slots:
     void onEditorTextChanged();
     void onAutoSaveTimeout();
 
-private:
-    void updatePreview(); // 调用 MdRender::toHtml
+   private:
+    void updatePreview();  // 调用 MdRender::toHtml
 
-private:
+   private:
     QPlainTextEdit* m_editor;
     MarkdownPreviewWidget* m_preview;
     QStackedWidget* m_stack;

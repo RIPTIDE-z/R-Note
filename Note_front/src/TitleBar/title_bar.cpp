@@ -1,16 +1,16 @@
 // CustomTitleBar.cpp
 #include "title_bar.h"
 
-#include <QLabel>
-#include <QToolButton>
+#include <QEvent>
 #include <QHBoxLayout>
+#include <QLabel>
 #include <QMouseEvent>
 #include <QStyle>
-#include <QEvent>
+#include <QToolButton>
 
 CustomTitleBar::CustomTitleBar(QWidget* window, QWidget* parent)
-    : QWidget(parent)
-    , m_window(window)
+    : QWidget(parent),
+      m_window(window)
 {
     // 让背景可用 QSS 填充
     setAutoFillBackground(true);
@@ -25,9 +25,9 @@ CustomTitleBar::CustomTitleBar(QWidget* window, QWidget* parent)
     m_btnMax = new QToolButton(this);
     m_btnClose = new QToolButton(this);
 
-    for (QToolButton* btn : { m_btnMin, m_btnMax, m_btnClose }) {
+    for (QToolButton* btn : {m_btnMin, m_btnMax, m_btnClose}) {
         btn->setCursor(Qt::ArrowCursor);
-        btn->setAutoRaise(true);               // 扁平风格
+        btn->setAutoRaise(true);  // 扁平风格
         btn->setFocusPolicy(Qt::NoFocus);
     }
 
@@ -45,7 +45,7 @@ CustomTitleBar::CustomTitleBar(QWidget* window, QWidget* parent)
     connect(m_btnClose, &QToolButton::clicked, this, &CustomTitleBar::onClickedClose);
 
     auto* hl = new QHBoxLayout(this);
-    hl->setContentsMargins(8, 0, 0, 0);   // 左边留一点空
+    hl->setContentsMargins(8, 0, 0, 0);  // 左边留一点空
     hl->setSpacing(0);
     hl->addWidget(m_titleLabel);
     hl->addWidget(m_btnMin);
@@ -64,7 +64,7 @@ CustomTitleBar::CustomTitleBar(QWidget* window, QWidget* parent)
 QSize CustomTitleBar::sizeHint() const
 {
     // 这里给一个默认高度，实际可以用 QSS 改 min-height
-    return { 200, 32 };
+    return {200, 32};
 }
 
 void CustomTitleBar::setTitle(const QString& title)
@@ -75,10 +75,7 @@ void CustomTitleBar::setTitle(const QString& title)
     }
 }
 
-QString CustomTitleBar::title() const
-{
-    return m_titleLabel->text();
-}
+QString CustomTitleBar::title() const { return m_titleLabel->text(); }
 
 // ============== 鼠标拖动窗口 ==============
 
@@ -150,8 +147,7 @@ void CustomTitleBar::onClickedMaximizeRestore()
     if (m_window->isMaximized()) {
         m_window->showNormal();
         emit restoreRequested();
-    }
-    else {
+    } else {
         m_window->showMaximized();
         emit maximizeRequested();
     }
@@ -174,8 +170,7 @@ void CustomTitleBar::updateMaximizeRestoreIcon()
     QStyle* st = style();
     if (m_window->isMaximized()) {
         m_btnMax->setIcon(st->standardIcon(QStyle::SP_TitleBarNormalButton));
-    }
-    else {
+    } else {
         m_btnMax->setIcon(st->standardIcon(QStyle::SP_TitleBarMaxButton));
     }
 }
@@ -186,14 +181,14 @@ bool CustomTitleBar::eventFilter(QObject* watched, QEvent* event)
 {
     if (watched == m_window) {
         switch (event->type()) {
-        case QEvent::WindowTitleChange:
-            m_titleLabel->setText(m_window->windowTitle());
-            break;
-        case QEvent::WindowStateChange:
-            updateMaximizeRestoreIcon();
-            break;
-        default:
-            break;
+            case QEvent::WindowTitleChange:
+                m_titleLabel->setText(m_window->windowTitle());
+                break;
+            case QEvent::WindowStateChange:
+                updateMaximizeRestoreIcon();
+                break;
+            default:
+                break;
         }
     }
     return QWidget::eventFilter(watched, event);

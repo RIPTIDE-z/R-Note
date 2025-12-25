@@ -12,28 +12,29 @@ class QLabel;
  *
  * 使用方式：
  *   ConfigDialog dlg(currentBaseUrl, currentProjectRoot, parent);
- *   connect(&dlg, &ConfigDialog::configAccepted, this, [&](const QString &baseUrl, const QString &projectRoot) {
+ *   connect(&dlg, &ConfigDialog::configAccepted, this, [&](const QString
+ * &baseUrl, const QString &projectRoot) {
  *       // 在这里调用 http->setBaseUrl(baseUrl)，保存 projectRoot 等
  *   });
  *   dlg.exec();
  */
-class ConfigDialog : public QDialog
-{
+class ConfigDialog : public QDialog {
     Q_OBJECT
-public:
-    explicit ConfigDialog(const QString& baseUrl,
+   public:
+    explicit ConfigDialog(
+        const QString& baseUrl,
         const QString& projectRoot,
-        QWidget* parent = nullptr);
+        QWidget* parent = nullptr
+    );
 
-signals:
-    void configAccepted(const QString& baseUrl,
-        const QString& projectRoot);
+   signals:
+    void configAccepted(const QString& baseUrl, const QString& projectRoot);
 
-private slots:
+   private slots:
     void onAcceptClicked();
     void onBrowseProjectRoot();
 
-private:
+   private:
     QLineEdit* m_baseUrlEdit = nullptr;
     QLineEdit* m_projectRootEdit = nullptr;
     QLabel* m_errorLabel = nullptr;

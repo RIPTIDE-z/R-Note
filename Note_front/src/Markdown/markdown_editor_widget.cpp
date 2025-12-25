@@ -1,13 +1,15 @@
 #include "markdown_editor_widget.h"
-#include "markdown_preview_widget.h"   
+
+#include <QDebug>
+#include <QFile>
+#include <QHBoxLayout>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QStackedWidget>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QFile>
 #include <QTimer>
-#include <QDebug>
+#include <QVBoxLayout>
+
+#include "markdown_preview_widget.h"
 
 MarkdownEditorWidget::MarkdownEditorWidget(QWidget* parent)
     : QWidget(parent)
@@ -34,8 +36,8 @@ MarkdownEditorWidget::MarkdownEditorWidget(QWidget* parent)
     m_preview->setFont(monoFont);
 
     QPalette pal = m_editor->palette();
-    pal.setColor(QPalette::Base, QColor("#2a2a2a"));   // 背景色
-    pal.setColor(QPalette::Text, QColor("#e0e0e0"));   // 字体颜色（选）
+    pal.setColor(QPalette::Base, QColor("#2a2a2a"));  // 背景色
+    pal.setColor(QPalette::Text, QColor("#e0e0e0"));  // 字体颜色（选）
     m_editor->setPalette(pal);
 
     // 自动保存计时器
@@ -55,25 +57,21 @@ MarkdownEditorWidget::MarkdownEditorWidget(QWidget* parent)
     mainLayout->addWidget(m_stack);
 
     // 信号连接
-    connect(m_toggleButton, &QPushButton::clicked,
-        this, &MarkdownEditorWidget::toggleMode);
+    connect(m_toggleButton, &QPushButton::clicked, this, &MarkdownEditorWidget::toggleMode);
 
-    connect(m_editor, &QPlainTextEdit::textChanged,
-        this, &MarkdownEditorWidget::onEditorTextChanged);
+    connect(
+        m_editor,
+        &QPlainTextEdit::textChanged,
+        this,
+        &MarkdownEditorWidget::onEditorTextChanged
+    );
 
-    connect(m_autoSaveTimer, &QTimer::timeout,
-        this, &MarkdownEditorWidget::onAutoSaveTimeout);
+    connect(m_autoSaveTimer, &QTimer::timeout, this, &MarkdownEditorWidget::onAutoSaveTimeout);
 }
 
-void MarkdownEditorWidget::setFilePath(const QString& path)
-{
-    m_filePath = path;
-}
+void MarkdownEditorWidget::setFilePath(const QString& path) { m_filePath = path; }
 
-QString MarkdownEditorWidget::markdownText() const
-{
-    return m_editor->toPlainText();
-}
+QString MarkdownEditorWidget::markdownText() const { return m_editor->toPlainText(); }
 
 void MarkdownEditorWidget::setMarkdownText(const QString& text, bool updateEditor)
 {
@@ -128,8 +126,9 @@ void MarkdownEditorWidget::saveToFile()
 
 void MarkdownEditorWidget::setPreviewMode(bool on)
 {
-    if (m_inPreview == on)
+    if (m_inPreview == on) {
         return;
+    }
 
     m_inPreview = on;
 
@@ -137,8 +136,7 @@ void MarkdownEditorWidget::setPreviewMode(bool on)
         updatePreview();
         m_stack->setCurrentWidget(m_preview);
         m_toggleButton->setText(tr("切换到编辑"));
-    }
-    else {
+    } else {
         m_stack->setCurrentWidget(m_editor);
         m_toggleButton->setText(tr("切换到预览"));
     }
@@ -146,23 +144,17 @@ void MarkdownEditorWidget::setPreviewMode(bool on)
     emit modeChanged(m_inPreview);
 }
 
-void MarkdownEditorWidget::toggleMode()
-{
-    setPreviewMode(!m_inPreview);
-}
+void MarkdownEditorWidget::toggleMode() { setPreviewMode(!m_inPreview); }
 
 void MarkdownEditorWidget::onEditorTextChanged()
 {
     emit contentChanged();
 
     // 防抖自动保存：每次修改重置计时器
-    m_autoSaveTimer->start(100); // 1 秒不输入就保存
+    m_autoSaveTimer->start(100);  // 1 秒不输入就保存
 }
 
-void MarkdownEditorWidget::onAutoSaveTimeout()
-{
-    saveToFile();
-}
+void MarkdownEditorWidget::onAutoSaveTimeout() { saveToFile(); }
 
 void MarkdownEditorWidget::updatePreview()
 {

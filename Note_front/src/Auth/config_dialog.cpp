@@ -1,19 +1,18 @@
 #include "config_dialog.h"
 
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QFormLayout>
-#include <QLineEdit>
-#include <QLabel>
-#include <QPushButton>
-#include <QFileDialog>
-
 #include <QWKWidgets/widgetwindowagent.h>
-#include "title_bar.h"   // 你自己的自定义标题栏类
 
-ConfigDialog::ConfigDialog(const QString& baseUrl,
-    const QString& projectRoot,
-    QWidget* parent)
+#include <QFileDialog>
+#include <QFormLayout>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QVBoxLayout>
+
+#include "title_bar.h"  // 你自己的自定义标题栏类
+
+ConfigDialog::ConfigDialog(const QString& baseUrl, const QString& projectRoot, QWidget* parent)
     : QDialog(parent)
 {
     // 去掉系统标题栏，用自定义 titlebar + QWindowKit
@@ -39,7 +38,8 @@ ConfigDialog::ConfigDialog(const QString& baseUrl,
         "QLineEdit { background-color: #1e1e1e; border: 1px solid #444444; "
         "           border-radius: 4px; padding: 6px; }"
         "QPushButton { background-color: #7b3ff2; color: white; "
-        "             border-radius: 6px; padding: 6px 10px; font-weight: 600; }"
+        "             border-radius: 6px; padding: 6px 10px; font-weight: "
+        "600; }"
         "QPushButton:disabled { background-color: #555555; }"
         "QLabel#errorLabel { color: #ff5c5c; }"
     );
@@ -131,15 +131,11 @@ ConfigDialog::ConfigDialog(const QString& baseUrl,
     agent->setSystemButton(QWK::WindowAgentBase::Close, titleBar->closeButton());
 
     // 标题栏上的按钮逻辑（这里只需要关闭）
-    connect(titleBar->closeButton(), &QToolButton::clicked,
-        this, &QDialog::reject);
+    connect(titleBar->closeButton(), &QToolButton::clicked, this, &QDialog::reject);
 
-    connect(cancelBtn, &QPushButton::clicked,
-        this, &QDialog::reject);
-    connect(okBtn, &QPushButton::clicked,
-        this, &ConfigDialog::onAcceptClicked);
-    connect(browseBtn, &QPushButton::clicked,
-        this, &ConfigDialog::onBrowseProjectRoot);
+    connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
+    connect(okBtn, &QPushButton::clicked, this, &ConfigDialog::onAcceptClicked);
+    connect(browseBtn, &QPushButton::clicked, this, &ConfigDialog::onBrowseProjectRoot);
 }
 
 void ConfigDialog::onBrowseProjectRoot()

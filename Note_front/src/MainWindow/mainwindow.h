@@ -4,17 +4,22 @@
 
 class NoteStructureManager;
 class AppConfig;
-class HttpManager;  
+class HttpManager;
 class LoginWindow;
 class RegisterWindow;
 class EditorWindow;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
-public:
-    explicit MainWindow(AppConfig* config, HttpManager* http, NoteStructureManager* noteMgr, QWidget* parent = nullptr);
+   public:
+    explicit MainWindow(
+        AppConfig* config,
+        HttpManager* http,
+        NoteStructureManager* noteMgr,
+        QWidget* parent = nullptr
+    );
 
-private:
+   private:
     QStackedWidget* stacked_;
     LoginWindow* loginPage_;
     RegisterWindow* regPage_;

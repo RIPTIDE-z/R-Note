@@ -2,10 +2,10 @@
 #include <QGuiApplication>
 #include <QIcon>
 
-#include "mainwindow.h"
-#include "httpmanager.h"
-#include "note_structure_manager.h"
 #include "app_config.h"
+#include "httpmanager.h"
+#include "mainwindow.h"
+#include "note_structure_manager.h"
 
 int main(int argc, char* argv[])
 {
