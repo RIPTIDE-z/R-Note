@@ -11,10 +11,9 @@ class QNetworkReply;
  * - 不保存 token / projectRoot，也不写任何文件
  * - 通过信号把 JSON 结果抛给上层
  */
-class HttpManager : public QObject
-{
+class HttpManager : public QObject {
     Q_OBJECT
-public:
+   public:
     explicit HttpManager(QObject* parent = nullptr);
 
     // 设置 baseUrl，例如 "http://127.0.0.1:8080/api"
@@ -36,8 +35,8 @@ public:
 
     // DEL /notes/{noteId}
     void updateNote(
-        const QString& token, 
-        const int noteId, 
+        const QString& token,
+        const int noteId,
         const int code,
         const int targetVersion,
         const QString changeSummary,
@@ -56,18 +55,16 @@ public:
     void fetchNoteStructure(const QString& token);
 
     // PUT /note-structure
-    void updateNoteStructure(const QString& token,
-        const QJsonObject& noteStruct);       
+    void updateNoteStructure(const QString& token, const QJsonObject& noteStruct);
 
-signals:
+   signals:
     // 网络错误
     void networkError(const QString& msg);
 
     // 注册登录相关响应
     // 登录结果：ok, message, token, note_structure(可能为空对象)
-    void loginResult(bool ok, const QString& msg,
-        const QString& token,
-        const QJsonObject& noteStruct);
+    void
+    loginResult(bool ok, const QString& msg, const QString& token, const QJsonObject& noteStruct);
     void registerResult(bool ok, const QString& msg);
     void logoutResult(bool ok, const QString& msg);
 
@@ -79,17 +76,14 @@ signals:
     void getHistoryListResult(bool ok, const QString& msg, const QJsonArray& noteHistoryList);
 
     // 结构相关响应
-    void fetchNoteStructureResult(
-        bool ok,
-        const QString& message,
-        const QJsonObject& noteStructure
-    );
+    void
+    fetchNoteStructureResult(bool ok, const QString& message, const QJsonObject& noteStructure);
     void updateNoteStructureResult(bool ok, const QString& message);
 
-private slots:
+   private slots:
     void onReplyFinished(QNetworkReply* reply);
 
-private:
+   private:
     // 响应体数据处理
     void handleLoginResponse(const QJsonObject& obj);
     void handleRegisterResponse(const QJsonObject& obj);
@@ -101,7 +95,7 @@ private:
     void handleGetNoteByVersionResponse(const QJsonObject& obj);
     void handleGetHistoryListResponse(const QJsonObject& obj);
 
-private:
+   private:
     QNetworkAccessManager m_manager;
     QString m_baseUrl;
 };

@@ -1,0 +1,55 @@
+Language: Cpp
+
+BasedOnStyle: Google
+
+# 缩进8格
+IndentWidth: 4
+
+# 不使用tab缩进
+UseTab: Never
+
+# 列宽限制为100
+ColumnLimit: 100
+
+# 参数列表需要换行时，右括号另起一行
+AlignAfterOpenBracket: BlockIndent
+
+# 声明/定义放不下时，每个参数单独一行；放得下则保持一行
+BinPackParameters: false
+BinPackArguments: false
+
+# 不允许参数 “整体移到下一行”
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowAllArgumentsOnNextLine: false
+
+# 指针星号偏左
+PointerAlignment: Left
+
+# 花括号初始化列表
+Cpp11BracedListStyle: true
+
+# 单行if else 也要大括号
+InsertBraces: true
+
+# Linux Kernel样式的大括号策略
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterClass: false
+  AfterControlStatement: false
+  AfterEnum: false
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: false
+  AfterUnion: false
+  BeforeCatch: false
+  BeforeLambdaBody: false
+  BeforeElse: false
+  IndentBraces: false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+
+# 列表初始化要一个初始化一行，且逗号在行末尾
+BreakConstructorInitializers: BeforeColon
+PackConstructorInitializers: Never

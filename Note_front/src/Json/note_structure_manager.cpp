@@ -1,11 +1,11 @@
 #include "note_structure_manager.h"
 
+#include <QDirIterator>
 #include <QFile>
 #include <QJsonArray>
-#include <QJsonObject>
 #include <QJsonDocument>
+#include <QJsonObject>
 #include <QJsonParseError>
-#include <QDirIterator>
 #include <QStandardItem>
 
 NoteStructureManager::NoteStructureManager(QObject* parent)
@@ -15,27 +15,22 @@ NoteStructureManager::NoteStructureManager(QObject* parent)
 
 /**
  * 生成自增ID
- * @param nextId 
- * @return 
+ * @param nextId
+ * @return
  */
-QString NoteStructureManager::generateId(int& nextId) const
-{
-    return QString::number(nextId++);
-}
+QString NoteStructureManager::generateId(int& nextId) const { return QString::number(nextId++); }
 
 // ========== JSON解析 ==========
 /**
  * @brief 将QJSON对象解析为NoteNode树结构
  * @param obj         要解析的QJson对象
- * @param maxIdInOut 
- * @param parentPath 
- * @return 
+ * @param maxIdInOut
+ * @param parentPath
+ * @return
  */
-std::unique_ptr<NoteNode> NoteStructureManager::fromJson(
-    const QJsonObject& obj,
-    int& maxIdInOut,
-    const QString& parentPath
-) {
+std::unique_ptr<NoteNode>
+NoteStructureManager::fromJson(const QJsonObject& obj, int& maxIdInOut, const QString& parentPath)
+{
     // 根节点
     auto node = std::make_unique<NoteNode>();
 
@@ -45,8 +40,7 @@ std::unique_ptr<NoteNode> NoteStructureManager::fromJson(
     QString typeStr = obj.value("type").toString();
     if (typeStr == "folder") {
         node->type = NoteNodeType::Folder;
-    }
-    else {
+    } else {
         node->type = NoteNodeType::Note;
     }
 
@@ -76,7 +70,9 @@ std::unique_ptr<NoteNode> NoteStructureManager::fromJson(
         node->children.reserve(children.size());
 
         for (const QJsonValue& v : children) {
-            if (!v.isObject()) continue;
+            if (!v.isObject()) {
+                continue;
+            }
             // 递归创建子节点
             auto child = fromJson(v.toObject(), maxIdInOut, currentPath);
             node->children.push_back(std::move(child));
@@ -88,12 +84,12 @@ std::unique_ptr<NoteNode> NoteStructureManager::fromJson(
 
 /**
  * @brief 解析出Json文件中的根节点
- * @param filePath 
- * @param maxIdOut 
- * @return 
+ * @param filePath
+ * @param maxIdOut
+ * @return
  */
-std::unique_ptr<NoteNode> NoteStructureManager::loadFromJsonFile(
-    const QString& filePath, int& maxIdOut)
+std::unique_ptr<NoteNode>
+NoteStructureManager::loadFromJsonFile(const QString& filePath, int& maxIdOut)
 {
     maxIdOut = 0;
     QFile f(filePath);
@@ -118,8 +114,8 @@ std::unique_ptr<NoteNode> NoteStructureManager::loadFromJsonFile(
 
 /**
  * 将NoteNode树结构解析为QJson对象
- * @param node 
- * @return 
+ * @param node
+ * @return
  */
 QJsonObject NoteStructureManager::toJson(const NoteNode* node) const
 {
@@ -161,8 +157,7 @@ void NoteStructureManager::saveToJsonFile(const QString& filePath, const NoteNod
     QDir dir = info.dir();
     if (!dir.exists()) {
         if (!dir.mkpath(".")) {
-            qDebug() << "Failed to create dir for:" << filePath
-                << ", error when making path.";
+            qDebug() << "Failed to create dir for:" << filePath << ", error when making path.";
             return;
         }
     }
@@ -181,13 +176,16 @@ void NoteStructureManager::saveToJsonFile(const QString& filePath, const NoteNod
     qDebug() << "Saved json to:" << filePath;
 }
 
-
 // ========== 用现有树构建 path -> IdInfo 索引 ==========
-void NoteStructureManager::buildPathIndex(const NoteNode* node,
+void NoteStructureManager::buildPathIndex(
+    const NoteNode* node,
     QHash<QString, IdInfo>& index,
-    const QString& parentPath) const
+    const QString& parentPath
+) const
 {
-    if (!node) return;
+    if (!node) {
+        return;
+    }
 
     QString currentPath = parentPath + "/" + node->name;
     IdInfo info;
@@ -209,7 +207,8 @@ std::unique_ptr<NoteNode> NoteStructureManager::buildFromDirectory(
     int& nextId,
     const QHash<QString, IdInfo>* existingIndex,
     const QString& parentPath
-) {
+)
+{
     QFileInfo rootInfo(rootDir);
     qDebug() << "rootDir =" << rootDir << "exists =" << rootInfo.exists();
     if (!rootInfo.exists()) {
@@ -217,9 +216,7 @@ std::unique_ptr<NoteNode> NoteStructureManager::buildFromDirectory(
     }
 
     auto node = std::make_unique<NoteNode>();
-    node->name = rootInfo.fileName().isEmpty()
-        ? rootInfo.absoluteFilePath()
-        : rootInfo.fileName();
+    node->name = rootInfo.fileName().isEmpty() ? rootInfo.absoluteFilePath() : rootInfo.fileName();
     node->type = rootInfo.isDir() ? NoteNodeType::Folder : NoteNodeType::Note;
 
     QString currentPath = parentPath + "/" + node->name;
@@ -231,8 +228,7 @@ std::unique_ptr<NoteNode> NoteStructureManager::buildFromDirectory(
         const IdInfo& info = existingIndex->value(currentPath);
         node->id = info.id;
         node->remoteNoteId = info.remoteNoteId;
-    }
-    else {
+    } else {
         node->id = generateId(nextId);
     }
 
@@ -244,7 +240,8 @@ std::unique_ptr<NoteNode> NoteStructureManager::buildFromDirectory(
         );
 
         for (const QFileInfo& fi : entries) {
-            auto child = buildFromDirectory(fi.absoluteFilePath(), nextId, existingIndex, currentPath);
+            auto child =
+                buildFromDirectory(fi.absoluteFilePath(), nextId, existingIndex, currentPath);
             if (child) {
                 node->children.push_back(std::move(child));
             }
@@ -260,7 +257,8 @@ std::unique_ptr<NoteNode> NoteStructureManager::updateStructureFromDirAndJson(
     const QString& jsonFile,
     const QString& rootDir,
     int& nextIdOut
-) {
+)
+{
     // 1. 读旧 JSON
     int maxId = 0;
     std::unique_ptr<NoteNode> oldRoot = loadFromJsonFile(jsonFile, maxId);
@@ -280,17 +278,16 @@ std::unique_ptr<NoteNode> NoteStructureManager::updateStructureFromDirAndJson(
 // 往QStandardItem里填充数据
 static void fillModelRecursive(QStandardItem* parentItem, const NoteNode* node)
 {
-    if (!node) return;
+    if (!node) {
+        return;
+    }
 
     // 第一列：名称
     auto* nameItem = new QStandardItem(node->name);
 
     // 附加数据
     nameItem->setData(node->id, Qt::UserRole + 1);
-    nameItem->setData(
-        node->type == NoteNodeType::Folder ? "folder" : "note",
-        Qt::UserRole + 2
-    );
+    nameItem->setData(node->type == NoteNodeType::Folder ? "folder" : "note", Qt::UserRole + 2);
     if (node->remoteNoteId.has_value()) {
         nameItem->setData(static_cast<qint64>(*node->remoteNoteId), Qt::UserRole + 3);
     }
@@ -307,15 +304,15 @@ static void fillModelRecursive(QStandardItem* parentItem, const NoteNode* node)
     }
 }
 
-QStandardItemModel* NoteStructureManager::createTreeModel(
-    const NoteNode* root,
-    QObject* parent
-) const
+QStandardItemModel*
+NoteStructureManager::createTreeModel(const NoteNode* root, QObject* parent) const
 {
     auto* model = new QStandardItemModel(parent);
-    model->setHorizontalHeaderLabels({ "Name" });
+    model->setHorizontalHeaderLabels({"Name"});
 
-    if (!root) return model;
+    if (!root) {
+        return model;
+    }
 
     // 根节点本身也作为一行
     auto* rootDummy = model->invisibleRootItem();
@@ -325,11 +322,15 @@ QStandardItemModel* NoteStructureManager::createTreeModel(
 }
 
 // 通过绝对路径在json中搜寻对应笔记并写入remoteId
-bool NoteStructureManager::setRemoteNoteIdByAbsolutePath(NoteNode* node,
+bool NoteStructureManager::setRemoteNoteIdByAbsolutePath(
+    NoteNode* node,
     const QString& absPath,
-    const int remoteId)
+    const int remoteId
+)
 {
-    if (!node) return false;
+    if (!node) {
+        return false;
+    }
 
     const QString a = QDir::cleanPath(node->absolutePath);
     const QString b = QDir::cleanPath(absPath);
@@ -341,8 +342,9 @@ bool NoteStructureManager::setRemoteNoteIdByAbsolutePath(NoteNode* node,
 
     if (node->type == NoteNodeType::Folder) {
         for (auto& child : node->children) {
-            if (setRemoteNoteIdByAbsolutePath(child.get(), absPath, remoteId))
+            if (setRemoteNoteIdByAbsolutePath(child.get(), absPath, remoteId)) {
                 return true;
+            }
         }
     }
     return false;

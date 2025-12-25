@@ -3,16 +3,15 @@
 
 class QTextBrowser;
 
-class MarkdownPreviewWidget : public QWidget
-{
+class MarkdownPreviewWidget : public QWidget {
     Q_OBJECT
-public:
+   public:
     explicit MarkdownPreviewWidget(QWidget* parent = nullptr);
 
-public slots:
-    void setMarkdownText(const QString& text);   // 外部传 md 文本
-    void setHtmlDirect(const QString& html);     // 直接显示现成的html
+   public slots:
+    void setMarkdownText(const QString& text);  // 外部传 md 文本
+    void setHtmlDirect(const QString& html);    // 直接显示现成的html
 
-private:
+   private:
     QTextBrowser* m_browser;
 };

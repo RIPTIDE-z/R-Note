@@ -1,17 +1,22 @@
 #include "mainwindow.h"
 
-#include <QVBoxLayout>
 #include <QWKWidgets/widgetwindowagent.h>
 
+#include <QVBoxLayout>
+
 #include "app_config.h"
-#include "login_window.h"
-#include "register_window.h"
 #include "editor_window.h"
 #include "httpmanager.h"
+#include "login_window.h"
+#include "register_window.h"
 #include "title_bar.h"
 
-
-MainWindow::MainWindow(AppConfig* config, HttpManager* http, NoteStructureManager* noteMgr, QWidget* parent)
+MainWindow::MainWindow(
+    AppConfig* config,
+    HttpManager* http,
+    NoteStructureManager* noteMgr,
+    QWidget* parent
+)
     : QMainWindow(parent),
       stacked_(new QStackedWidget(this))
 {
@@ -70,44 +75,40 @@ MainWindow::MainWindow(AppConfig* config, HttpManager* http, NoteStructureManage
     // agent->setHitTestVisible(titleBar->menuBar(), true);
 
     // 信号连接：切换页面
-    connect(loginPage_, &LoginWindow::requestShowRegister,
-            this, [this]() { stacked_->setCurrentWidget(regPage_); });
+    connect(loginPage_, &LoginWindow::requestShowRegister, this, [this]() {
+        stacked_->setCurrentWidget(regPage_);
+    });
 
-    connect(regPage_, &RegisterWindow::requestShowLogin,
-            this, [this]() { stacked_->setCurrentWidget(loginPage_); });
+    connect(regPage_, &RegisterWindow::requestShowLogin, this, [this]() {
+        stacked_->setCurrentWidget(loginPage_);
+    });
 
-    connect(loginPage_, &LoginWindow::loginSucceeded,
+    connect(
+        loginPage_,
+        &LoginWindow::loginSucceeded,
         this,
-        [this, config](const QString& token, const QJsonObject& noteStruct)
-        {
+        [this, config](const QString& token, const QJsonObject& noteStruct) {
             editorPage_->setToken(token);
 
             // 从 AppConfig 取当前 projectRoot
             const QString projectRoot = config->projectRoot();
 
-            editorPage_->initNoteTree(
-                projectRoot + "/.Note/note_structure.json",
-                projectRoot
-            );
+            editorPage_->initNoteTree(projectRoot + "/.Note/note_structure.json", projectRoot);
 
             resizeKeepCenter(this, 1440, 900);
             stacked_->setCurrentWidget(editorPage_);
-        });
+        }
+    );
 
-    connect(editorPage_, &EditorWindow::logoutSucceeded,
-            this, [this]()
-            {
-                // 回到登录界面时缩回去
-                resizeKeepCenter(this, 500, 500);
-                stacked_->setCurrentWidget(loginPage_);
-            });
+    connect(editorPage_, &EditorWindow::logoutSucceeded, this, [this]() {
+        // 回到登录界面时缩回去
+        resizeKeepCenter(this, 500, 500);
+        stacked_->setCurrentWidget(loginPage_);
+    });
 
-    connect(config, &AppConfig::baseUrlChanged,
-        this, [this, http](const QString& url)
-        {
-            http->setBaseUrl(url);
-        });
-
+    connect(config, &AppConfig::baseUrlChanged, this, [this, http](const QString& url) {
+        http->setBaseUrl(url);
+    });
 }
 
 void MainWindow::resizeKeepCenter(QWidget* w, int newWidth, int newHeight)

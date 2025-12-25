@@ -1,11 +1,13 @@
 #include "markdown_preview_widget.h"
-#include <QVBoxLayout>
+
 #include <QTextBrowser>
+#include <QVBoxLayout>
+
 #include "markdown_renderer.h"
 
 MarkdownPreviewWidget::MarkdownPreviewWidget(QWidget* parent)
     : QWidget(parent),
-    m_browser(new QTextBrowser(this))
+      m_browser(new QTextBrowser(this))
 {
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -19,8 +21,8 @@ MarkdownPreviewWidget::MarkdownPreviewWidget(QWidget* parent)
     m_browser->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     QFont baseFont;
-    baseFont.setFamily("JetBrains Mono");  
-    baseFont.setPointSize(13);             
+    baseFont.setFamily("JetBrains Mono");
+    baseFont.setPointSize(13);
     baseFont.setStyleHint(QFont::Monospace);
     m_browser->setFont(baseFont);
 
@@ -39,7 +41,4 @@ void MarkdownPreviewWidget::setMarkdownText(const QString& text)
     m_browser->setHtml(html);
 }
 
-void MarkdownPreviewWidget::setHtmlDirect(const QString& html)
-{
-    m_browser->setHtml(html);
-}
+void MarkdownPreviewWidget::setHtmlDirect(const QString& html) { m_browser->setHtml(html); }

@@ -1,34 +1,32 @@
 #ifndef REGISTERWINDOW_H
 #define REGISTERWINDOW_H
 
-#include <QWidget>
 #include <QString>
+#include <QWidget>
 
 class HttpManager;
 class QEvent;
 class ConfigDialog;
 class AppConfig;
 
-namespace Ui {
-    class RegisterWindow;
+namespace Ui
+{
+class RegisterWindow;
 }
 
-class RegisterWindow : public QWidget
-{
+class RegisterWindow : public QWidget {
     Q_OBJECT
-public:
-    explicit RegisterWindow(HttpManager* http,
-        AppConfig* config,
-        QWidget* parent = nullptr);
+   public:
+    explicit RegisterWindow(HttpManager* http, AppConfig* config, QWidget* parent = nullptr);
     ~RegisterWindow() override;
 
-protected:
+   protected:
     bool eventFilter(QObject* obj, QEvent* event) override;
 
-signals:
+   signals:
     void requestShowLogin();
 
-private slots:
+   private slots:
     void onRegisterClicked();
     void onRegisterResult(bool ok, const QString& message);
     void onNetworkError(const QString& error);
@@ -37,13 +35,12 @@ private slots:
     void onConfigButtonClicked();
 
     // ConfigDialog 返回成功时
-    void onConfigAccepted(const QString& baseUrl,
-        const QString& projectRoot);
+    void onConfigAccepted(const QString& baseUrl, const QString& projectRoot);
 
-private:
+   private:
     Ui::RegisterWindow* ui = nullptr;
     HttpManager* m_http = nullptr;
     AppConfig* m_config = nullptr;
 };
 
-#endif // REGISTERWINDOW_H
+#endif  // REGISTERWINDOW_H
