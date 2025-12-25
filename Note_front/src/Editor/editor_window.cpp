@@ -777,6 +777,15 @@ void EditorWindow::onGetHistoryListResult(
         m_summaryText->setPlainText(QStringLiteral("该笔记暂无历史版本。"));
         return;
     }
+    QMessageBox::information(this, "更新笔记结构成功", message);
+}
+
+void EditorWindow::onFetchNoteStructureResult(bool ok, const QString& message, const QJsonObject& noteStruct)
+{
+    qDebug() << "fetch note structure result:" << ok << message;
+
+    if (!ok)
+        return;
 
     // 为每个HItem创建QListWidgetItem
     for (const auto& it : items) {
